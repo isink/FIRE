@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRE · 财富自由计算器</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ═══ Left nav ═══ -->
+  <nav class="side-nav">
+    <div class="nav-brand">F</div>
+    <button class="nav-btn active" data-view="overview" title="总览">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="2" y="11" width="4" height="7" rx="1"/>
+        <rect x="8" y="7"  width="4" height="11" rx="1"/>
+        <rect x="14" y="3" width="4" height="15" rx="1"/>
+      </svg>
+      <span>总览</span>
+    </button>
+    <button class="nav-btn" data-view="income" title="收入">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M3 10h14M10 3l4 4-4 4M10 17l4-4-4-4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>收入</span>
+    </button>
+    <button class="nav-btn" data-view="assets" title="资产">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="10" cy="10" r="7.5"/>
+        <path d="M10 6v1.5M10 12.5V14M7.5 11.5c0 1.1.9 2 2.5 2s2.5-.9 2.5-2-1-1.8-2.5-2.3C8.5 8.7 7.5 8 7.5 6.8c0-1 .9-1.8 2.5-1.8s2.5.8 2.5 1.8"/>
+      </svg>
+      <span>资产</span>
+    </button>
+    <button class="nav-btn" data-view="debts" title="债务">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M3 8.5L10 3l7 5.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5z" stroke-linejoin="round"/>
+        <path d="M8 18v-5h4v5" stroke-linejoin="round"/>
+      </svg>
+      <span>债务</span>
+    </button>
+    <button class="nav-btn" data-view="events" title="事件">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="2.5" y="4" width="15" height="14" rx="2"/>
+        <path d="M6.5 2v4M13.5 2v4M2.5 9h15"/>
+        <path d="M6 13h2M10 13h2M6 16h2"/>
+      </svg>
+      <span>事件</span>
+    </button>
+    <div class="nav-spacer"></div>
+    <span id="dataSourceBadge" class="nav-status" title="后端状态">●</span>
+  </nav>
+
+  <!-- ═══ Top bar ═══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="plan-label">方案</span>
+      <select id="planSelect" class="plan-select"></select>
+      <button class="btn btn-sm icon-btn" onclick="renameActivePlan()" title="重命名">✏</button>
+      <button class="btn btn-sm" onclick="duplicatePlan()">复制</button>
+      <button class="btn btn-sm icon-btn danger-btn" onclick="deleteActivePlan()" title="删除">🗑</button>
+    </div>
+    <div class="topbar-right">
+      <label class="toggle">
+        <input type="checkbox" id="compareToggle" onchange="toggleCompare()">
+        <span>对比模式</span>
+      </label>
+      <button class="btn btn-sm btn-primary" onclick="refreshAllPrices()">↻ 刷新行情</button>
+    </div>
+  </header>
+
+  <!-- ═══ Main area (view switcher) ═══ -->
+  <main class="main-area">
+
+    <!-- ── View: Overview ── -->
+    <div class="view active" id="view-overview">
+
+      <!-- Metrics strip -->
+      <div class="metrics-strip">
+        <div class="metric-block">
+          <div class="metric-label">净资产</div>
+          <div class="metric-value mono" id="netWorth">0</div>
+          <div class="metric-sub">目标 <span class="mono" id="targetLabel">¥10,000,000</span></div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">已达进度</div>
+          <div class="metric-value mono" id="progressPct">0%</div>
+          <div class="progress-inline">
+            <div class="progress-fill-inline" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-block metric-highlight">
+          <div class="metric-label">FIRE 预计达成</div>
+          <div class="metric-value-lg mono" id="dateToFire">—</div>
+          <div class="metric-sub"><span class="mono" id="yearsToFire">—</span> 年后</div>
+        </div>
+
+        <div class="metric-block metric-highlight-coast">
+          <div class="metric-label">可停投点 <span style="font-weight:400;opacity:.7">Coast FIRE</span></div>
+          <div class="metric-value-lg mono" id="coastFireDate">—</div>
+          <div class="metric-sub"><span class="mono" id="coastFireYears">—</span> 年后可停止定投</div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">达成概率</div>
+          <div class="metric-value mono" id="successRate">—</div>
+          <div class="metric-sub">退休可持续 <span class="mono" id="sustainabilityRate">—</span></div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">当前储蓄率</div>
+          <div class="metric-value mono" id="savingsRateHero">—</div>
+          <div class="metric-sub">(收入 − 支出) / 收入</div>
+        </div>
+      </div>
+
+      <!-- Chart zone -->
+      <div class="chart-zone">
+        <div class="chart-header-row">
+          <div class="chart-stats" id="chartStats"></div>
+          <div class="chart-actions">
+            <button class="btn btn-xs hist-sim-btn" id="histSimBtn" onclick="toggleHistoricalSim()" title="叠加 A 股 CSI 300 实际历史情景（需后端在线）">+ 历史情景</button>
+          </div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Annual cash flow projection table -->
+      <div id="cashFlowTable"></div>
+
+    </div><!-- /view-overview -->
+
+    <!-- ── View: Income ── -->
+    <div class="view" id="view-income">
+      <div class="view-header">
+        <h2 class="view-title">收入来源</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">月收入合计 <strong class="mono accent">¥<span id="incomeTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">储蓄率 <strong class="mono" id="savingsRateDisplay">—</strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" id="addIncomeBtn" style="margin-left:auto">+ 添加收入</button>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">每条收入独立设定增长率和起止年份。退休后停止收入 → 在「事件」中添加「退休」事件；社保开始领取 → 添加「持续性事件」。</p>
+        <div class="income-list" id="incomeList"></div>
+      </div>
+    </div><!-- /view-income -->
+
+    <!-- ── View: Assets ── -->
+    <div class="view" id="view-assets">
+      <div class="view-header">
+        <h2 class="view-title">资产</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">合计 <strong class="mono">¥<span id="assetTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月存入 <strong class="mono accent">¥<span id="cashInflow">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月投资 <strong class="mono">¥<span id="dcaTotal">0</span></strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="refreshAllPrices()" style="margin-left:auto">↻ 刷新行情</button>
+      </div>
+      <div class="view-body">
+        <div class="calendar-hint" id="calendarHint">📅 加载交易日历…</div>
+        <div class="asset-list" id="assetList"></div>
+        <button class="add-btn" onclick="addAsset()">+ 添加资产</button>
+        <div class="hint">
+          <strong>用法：</strong>
+          ① 选类型 ② 输代码（基金 <code>005827</code> / A股 <code>sh600519</code> / 黄金 <code>AU9999</code> / 加密 <code>bitcoin</code> / 港股 <code>00700</code> / 美股 <code>AAPL</code>）
+          ③ 输持仓金额 ④ 设定投方案。持仓金额统一以 ¥ 填写（港股/美股/加密按持仓市值折算）。<br>
+          <strong>个人养老金（IPA）</strong>：每年最多 ¥12,000，税前抵扣，退休前不可取。
+        </div>
+      </div>
+    </div><!-- /view-assets -->
+
+    <!-- ── View: Debts ── -->
+    <div class="view" id="view-debts">
+      <div class="view-header">
+        <h2 class="view-title">债务</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">总余额 <strong class="mono">¥<span id="debtBalanceTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月还款 <strong class="mono accent" style="color:var(--danger)">¥<span id="debtMonthlyTotal">0</span></strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" id="addDebtBtn" onclick="addLiability()" style="margin-left:auto">+ 添加债务</button>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">房贷 / 车贷 / 信用贷等。月还款会从现金流中扣除直到还清；还清后该笔月供自动转为可投资金。</p>
+        <div class="debt-list" id="debtList"></div>
+        <div class="hint">
+          <strong>等额本息 vs 等额本金</strong>：
+          ① <strong>等额本息</strong> — 每月还款金额固定，前期利息多本金少；
+          ② <strong>等额本金</strong> — 每月还本金固定，前期总还款多但总利息少。<br>
+          公积金贷款（利率约 3.1%）+ 商业贷款（利率约 3.5-4.5%）可以分别添加为两笔债务。
+        </div>
+      </div>
+    </div><!-- /view-debts -->
+
+    <!-- ── View: Events ── -->
+    <div class="view" id="view-events">
+      <div class="view-header">
+        <h2 class="view-title">时间线事件</h2>
+        <div class="view-header-actions">
+          <button class="btn btn-sm" onclick="addEventPreset('house')">🏠 买房首付</button>
+          <button class="btn btn-sm" onclick="addEventPreset('child')">👶 生娃加支出</button>
+          <button class="btn btn-sm" onclick="addEventPreset('pension')">🏦 社保领取</button>
+          <button class="btn btn-sm" onclick="addEventPreset('retire')">🌅 退休</button>
+          <button class="btn btn-sm btn-primary" onclick="openEventModal(null)">+ 自定义</button>
+        </div>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">一次性事件（买房首付等）直接冲减资产；持续性事件（社保、生娃支出）从该年起每月调整现金流；退休后收入停止，按退休月支出取款。</p>
+        <div class="event-list" id="eventList"></div>
+      </div>
+    </div><!-- /view-events -->
+
+  </main>
+
+  <!-- ═══ Right params panel ═══ -->
+  <aside class="params-panel">
+
+    <div class="preset-row">
+      <button class="preset-btn" data-preset="conservative" onclick="applyPreset(event,'conservative')">保守</button>
+      <button class="preset-btn active" data-preset="balanced"     onclick="applyPreset(event,'balanced')">平衡</button>
+      <button class="preset-btn"         data-preset="aggressive"  onclick="applyPreset(event,'aggressive')">激进</button>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">财富自由目标</span>
+        <span class="value mono">¥<span id="targetVal">10,000,000</span></span>
+      </div>
+      <input type="range" id="target" min="2000000" max="50000000" step="500000" value="10000000">
+      <div id="swrTargetHint" class="param-hint" style="display:none"></div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">月支出</span>
+        <span class="value mono">¥<span id="expenseVal">0</span></span>
+      </div>
+      <input type="range" id="expense" min="0" max="30000" step="500" value="0">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">退休后月支出</span>
+        <span class="value mono"><span id="retirementExpenseVal">同月支出</span></span>
+      </div>
+      <input type="range" id="retirementExpense" min="0" max="30000" step="500" value="0">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">年化预期收益</span>
+        <span class="value mono"><span id="returnVal">7.0</span>%</span>
+      </div>
+      <input type="range" id="return" min="0" max="20" step="0.5" value="7">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">年化波动率</span>
+        <span class="value mono"><span id="volVal">15</span>%</span>
+      </div>
+      <input type="range" id="vol" min="0" max="40" step="1" value="18">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">通胀率</span>
+        <span class="value mono"><span id="inflVal">2.5</span>%</span>
+      </div>
+      <input type="range" id="infl" min="0" max="8" step="0.1" value="2.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">收入年增长率</span>
+        <span class="value mono"><span id="incomeGrowthVal">3.0</span>%</span>
+      </div>
+      <input type="range" id="incomeGrowth" min="0" max="10" step="0.5" value="3">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">税费 / 摩擦成本</span>
+        <span class="value mono"><span id="taxDragVal">0.5</span>%</span>
+      </div>
+      <input type="range" id="taxDrag" min="0" max="2" step="0.1" value="0.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">安全提取率 (SWR)</span>
+        <span class="value mono"><span id="swrVal">4.0</span>%</span>
+      </div>
+      <input type="range" id="swr" min="2" max="6" step="0.1" value="3.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">退休提取策略</span>
+      </div>
+      <select id="withdrawalStrategy" class="param-select">
+        <option value="fixed">固定金额（通胀调整）</option>
+        <option value="pct">固定比例（SWR %）</option>
+      </select>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">模拟年数</span>
+        <span class="value mono"><span id="yearsVal">30</span> 年</span>
+      </div>
+      <input type="range" id="years" min="5" max="50" step="1" value="30">
+    </div>
+
+    <div class="params-footer">
+      仅供参考，不构成投资建议<br>
+      预设基于A股历史数据：沪深300含分红年化约9-10%<br>
+      SWR建议3-4%（A股波动高于美股）<br>
+      数据源: 天天基金 / 新浪财经 / 上海黄金交易所
+    </div>
+
+  </aside>
+
+</div><!-- /app-shell -->
+
+<!-- ═══ Event modal ═══ -->
+<div class="modal-backdrop" id="eventModalBackdrop">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="eventModalTitle">添加事件</h3>
+    <div class="form-group">
+      <label>事件名称</label>
+      <input type="text" id="evName" placeholder="例：买房首付">
+    </div>
+    <div class="form-group">
+      <label>触发年份</label>
+      <input type="number" id="evYear" min="2024" max="2080" step="1" value="2032">
+    </div>
+    <div class="form-group">
+      <label>类型</label>
+      <select id="evType" onchange="onEventTypeChange()">
+        <option value="lump">一次性（正=收入，负=支出）</option>
+        <option value="monthly">持续性（每月固定金额从该年起）</option>
+        <option value="stopIncome">退休（收入停止）</option>
+      </select>
+    </div>
+    <div class="form-group" id="evAmountGroup">
+      <label id="evAmountLabel">金额 ¥（正=收入，负=支出）</label>
+      <input type="number" id="evAmount" step="10000" value="-1500000">
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeEventModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEventModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="calendar.js"></script>
+<script src="api.js"></script>
+<script src="simulation.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
