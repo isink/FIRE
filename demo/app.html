@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRE · 财富自由计算器</title>
+<link rel="stylesheet" href="style.css">
+<!-- Tailwind Play CDN (preflight 关闭以保留现有自写 CSS) + Preline 变体 plugin -->
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<script>
+tailwind.config = {
+  corePlugins: { preflight: false },
+  theme: {
+    extend: {
+      colors: {
+        brand: { 50:'#fef2f2',100:'#fee2e2',200:'#fecaca',500:'#ef4444',600:'#dc2626',700:'#b91c1c',800:'#991b1b' },
+      },
+    },
+  },
+  plugins: [
+    function ({ addVariant }) {
+      addVariant('hs-overlay-open',         ['&.open', '.open &']);
+      addVariant('hs-overlay-backdrop-open',['&.open']);
+      addVariant('hs-accordion-active',     ['&.active', '.active &']);
+      addVariant('hs-dropdown-open',        ['&.open', '.open &']);
+      addVariant('hs-collapse-open',        ['&.open', '.open &']);
+    }
+  ],
+};
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-900 antialiased font-sans" style="font-family: 'Inter', 'PingFang SC', system-ui, sans-serif">
+<div class="app-shell grid h-screen overflow-hidden" style="grid-template-columns: 240px 1fr 288px; grid-template-rows: 64px 1fr;">
+
+  <!-- ═══ Sidebar (TailAdmin pattern: 240px wide, icon + label, grouped) ═══ -->
+  <nav class="side-nav bg-slate-900 flex flex-col py-5 overflow-y-auto">
+    <!-- Logo / Brand -->
+    <a href="/" class="flex items-center gap-2.5 px-5 mb-7" title="返回首页">
+      <div class="w-9 h-9 bg-brand-700 text-white font-bold rounded-lg grid place-items-center text-base">F</div>
+      <span class="text-white font-semibold tracking-tight">FIRE Planner</span>
+    </a>
+
+    <!-- Section: 主菜单 -->
+    <div class="px-5 mb-2 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">主菜单</div>
+    <button class="nav-btn-wide active" data-view="overview">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="11" width="4" height="7" rx="1"/><rect x="8" y="7" width="4" height="11" rx="1"/><rect x="14" y="3" width="4" height="15" rx="1"/></svg>
+      <span>总览</span>
+    </button>
+    <button class="nav-btn-wide" data-view="household">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="13.5" cy="6.5" r="2.5"/><path d="M2 17c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"/><path d="M9 17c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"/></svg>
+      <span>家庭</span>
+    </button>
+    <button class="nav-btn-wide" data-view="income">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10h14M10 3l4 4-4 4M10 17l4-4-4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>收入</span>
+    </button>
+    <button class="nav-btn-wide" data-view="expenses">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 4h14M3 4v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4M7 8h6M7 11h6M7 14h4"/></svg>
+      <span>支出</span>
+    </button>
+    <button class="nav-btn-wide" data-view="assets">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 6v1.5M10 12.5V14M7.5 11.5c0 1.1.9 2 2.5 2s2.5-.9 2.5-2-1-1.8-2.5-2.3C8.5 8.7 7.5 8 7.5 6.8c0-1 .9-1.8 2.5-1.8s2.5.8 2.5 1.8"/></svg>
+      <span>资产</span>
+    </button>
+    <button class="nav-btn-wide" data-view="debts">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8.5L10 3l7 5.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5z" stroke-linejoin="round"/><path d="M8 18v-5h4v5" stroke-linejoin="round"/></svg>
+      <span>债务</span>
+    </button>
+
+    <!-- Section: 规划 -->
+    <div class="px-5 mt-6 mb-2 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">规划</div>
+    <button class="nav-btn-wide" data-view="stages">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 10h16"/><circle cx="4" cy="10" r="1.6" fill="currentColor"/><circle cx="10" cy="10" r="1.6" fill="currentColor"/><circle cx="16" cy="10" r="1.6" fill="currentColor"/><path d="M4 10v3M10 10v3M16 10v3"/></svg>
+      <span>阶段</span>
+    </button>
+    <button class="nav-btn-wide" data-view="goals">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="4"/><circle cx="10" cy="10" r="1.2" fill="currentColor"/></svg>
+      <span>目标</span>
+    </button>
+    <button class="nav-btn-wide" data-view="events">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4" width="15" height="14" rx="2"/><path d="M6.5 2v4M13.5 2v4M2.5 9h15"/><path d="M6 13h2M10 13h2M6 16h2"/></svg>
+      <span>事件</span>
+    </button>
+
+    <div class="flex-1"></div>
+
+    <!-- Backend status footer -->
+    <div class="px-5 pt-4 mt-2 border-t border-slate-800 text-xs text-slate-500 flex items-center gap-2">
+      <span id="dataSourceBadge" title="后端状态">●</span>
+      <span class="text-slate-400">行情后端</span>
+    </div>
+  </nav>
+
+  <!-- ═══ Topbar (TailAdmin pattern: page title + plan select + secondary actions in overflow menu) ═══ -->
+  <header class="bg-white border-b border-slate-200 flex items-center justify-between px-6 gap-4">
+    <div class="flex items-center gap-4 min-w-0">
+      <h1 class="text-lg font-bold text-slate-900 tracking-tight whitespace-nowrap" id="pageTitle">总览</h1>
+      <span class="w-px h-5 bg-slate-200"></span>
+      <div class="flex items-center gap-1.5">
+        <select id="planSelect" class="text-sm font-medium bg-white border border-slate-200 rounded-md px-3 py-1.5 hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition max-w-[180px]"></select>
+        <button class="inline-flex items-center justify-center w-7 h-7 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" onclick="renameActivePlan()" title="重命名">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button class="inline-flex items-center justify-center w-7 h-7 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" onclick="duplicatePlan()" title="复制方案">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
+        <button class="inline-flex items-center justify-center w-7 h-7 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition" onclick="deleteActivePlan()" title="删除方案">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+        <input type="checkbox" id="compareToggle" onchange="toggleCompare()" class="w-4 h-4 rounded border-slate-300 text-brand-700 focus:ring-2 focus:ring-brand-500/30 cursor-pointer">
+        <span>对比模式</span>
+      </label>
+
+      <span class="text-xs font-mono text-slate-500 min-w-[60px] text-right" id="syncBadge"></span>
+
+      <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importStoreFromFile(event)">
+
+      <!-- More-actions dropdown (Preline hs-dropdown) -->
+      <div class="hs-dropdown relative inline-flex">
+        <button type="button" class="hs-dropdown-toggle inline-flex items-center justify-center w-9 h-9 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" title="更多操作">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm-2 6a2 2 0 100-4 2 2 0 000 4z"/></svg>
+        </button>
+        <div class="hs-dropdown-menu hs-dropdown-open:opacity-100 hidden opacity-0 transition-[opacity,margin] duration-200 absolute top-full right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-xl py-1.5 z-50">
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition inline-flex items-center gap-2" onclick="toggleTheme()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            切换主题
+          </button>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition inline-flex items-center gap-2" onclick="exportStore()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            导出 JSON
+          </button>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition inline-flex items-center gap-2" onclick="document.getElementById('importFile').click()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            导入 JSON
+          </button>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition inline-flex items-center gap-2" onclick="printReport()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            打印报告
+          </button>
+        </div>
+      </div>
+
+      <button class="text-sm font-medium text-white bg-brand-700 hover:bg-brand-800 px-4 py-2 rounded-md transition inline-flex items-center gap-1.5 shadow-sm" onclick="refreshAllPrices()">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        刷新行情
+      </button>
+
+      <span class="w-px h-6 bg-slate-200 mx-1"></span>
+
+      <!-- User menu (Preline hs-dropdown) -->
+      <div class="hs-dropdown relative inline-flex" id="userMenu">
+        <button type="button" class="hs-dropdown-toggle inline-flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100 px-2 py-1.5 rounded-md transition">
+          <span class="inline-flex items-center justify-center w-7 h-7 bg-brand-700 text-white rounded-full text-xs font-semibold" id="userAvatar">?</span>
+          <span class="max-w-[80px] truncate font-medium" id="userLabel">访客</span>
+          <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="hs-dropdown-menu hs-dropdown-open:opacity-100 hidden opacity-0 transition-[opacity,margin] duration-200 absolute top-full right-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl py-1.5 z-50" id="userMenuDropdown">
+          <div class="px-3 py-2 border-b border-slate-100">
+            <div class="text-sm font-medium text-slate-900 truncate" id="userMenuEmail">—</div>
+            <div class="text-xs text-slate-500 mt-0.5">免费版</div>
+          </div>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition" onclick="window.location.href='/'">营销首页</button>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition" onclick="window.location.href='/account'">账号设置</button>
+          <button class="w-full text-left text-sm text-slate-700 hover:bg-slate-50 px-3 py-2 transition" onclick="alert('升级专业版即将上线')">升级专业版</button>
+          <div class="h-px bg-slate-100 my-1"></div>
+          <button class="w-full text-left text-sm text-red-600 hover:bg-red-50 px-3 py-2 transition" onclick="signOut()">登出</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ Main area (view switcher) ═══ -->
+  <main class="main-area">
+
+    <!-- ── View: Overview ── -->
+    <div class="view active" id="view-overview">
+
+      <!-- Metrics strip -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+        <div class="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition">
+          <div class="text-xs text-slate-500 uppercase tracking-wider font-medium">净资产</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="netWorth">0</div>
+          <div class="text-xs text-slate-500 mt-1">目标 <span class="font-mono" id="targetLabel">¥10,000,000</span></div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition">
+          <div class="text-xs text-slate-500 uppercase tracking-wider font-medium">已达进度</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="progressPct">0%</div>
+          <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-brand-700 transition-all duration-500" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="bg-brand-700 text-white rounded-lg border border-brand-700 p-4 shadow-sm">
+          <div class="text-xs text-brand-100 uppercase tracking-wider font-medium">FIRE 预计达成</div>
+          <div class="text-3xl font-bold font-mono mt-1" id="dateToFire">—</div>
+          <div class="text-xs text-brand-100 mt-1"><span class="font-mono" id="yearsToFire">—</span> 年后</div>
+        </div>
+
+        <div class="bg-slate-900 text-white rounded-lg border border-slate-900 p-4 shadow-sm">
+          <div class="text-xs text-slate-300 uppercase tracking-wider font-medium">可停投点 <span class="opacity-70 font-normal">Coast FIRE</span></div>
+          <div class="text-3xl font-bold font-mono mt-1" id="coastFireDate">—</div>
+          <div class="text-xs text-slate-300 mt-1"><span class="font-mono" id="coastFireYears">—</span> 年后可停定投</div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition">
+          <div class="text-xs text-slate-500 uppercase tracking-wider font-medium">达成概率</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="successRate">—</div>
+          <div class="text-xs text-slate-500 mt-1">退休可持续 <span class="font-mono" id="sustainabilityRate">—</span></div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition">
+          <div class="text-xs text-slate-500 uppercase tracking-wider font-medium">当前储蓄率</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="savingsRateHero">—</div>
+          <div class="text-xs text-slate-500 mt-1">(收入 − 支出) / 收入</div>
+        </div>
+      </div>
+
+      <!-- Chart zone -->
+      <div class="chart-zone">
+        <div class="chart-header-row">
+          <div class="chart-stats" id="chartStats"></div>
+          <div class="chart-actions">
+            <div class="chart-style-toggle" id="chartStyleToggle">
+              <button class="cs-btn" data-style="stack" onclick="setChartStyle('stack')" title="按账户桶堆叠：现金 / 应税 / IPA">堆叠</button>
+              <button class="cs-btn" data-style="line" onclick="setChartStyle('line')" title="P50 + P10/P90 带">线条</button>
+            </div>
+            <button class="btn btn-xs hist-sim-btn" id="histSimBtn" onclick="toggleHistoricalSim()" title="叠加 A 股 CSI 300 实际历史情景（需后端在线）">+ 历史情景</button>
+          </div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Compare mode (auto-shown only when compareMode is on) -->
+      <div class="panel" id="panel-compare" data-default-open="1">
+        <div class="panel-head" onclick="togglePanel('panel-compare')">
+          <span class="panel-num">§1</span>
+          <span class="panel-title">方案对照</span>
+          <span class="panel-sub">多方案 side-by-side 关键指标</span>
+          <span class="panel-toggle">▾</span>
+        </div>
+        <div class="panel-body" id="compareTable"></div>
+      </div>
+
+      <!-- Annual cash flow -->
+      <div class="panel" id="panel-cashflow" data-default-open="1">
+        <div class="panel-head" onclick="togglePanel('panel-cashflow')">
+          <span class="panel-num">§2</span>
+          <span class="panel-title">逐年预测</span>
+          <span class="panel-sub">P50 中位数路径 · 收入 / 支出 / 储蓄 / 投资组合</span>
+          <span class="panel-toggle">▾</span>
+        </div>
+        <div class="panel-body" id="cashFlowTable"></div>
+      </div>
+
+      <!-- Cash flow sankey -->
+      <div class="panel" id="panel-sankey" data-default-open="1">
+        <div class="panel-head" onclick="togglePanel('panel-sankey')">
+          <span class="panel-num">§3</span>
+          <span class="panel-title">月度现金流桑基</span>
+          <span class="panel-sub">税前 → 税/五险一金 + 分类支出 + 净储蓄</span>
+          <span class="panel-toggle">▾</span>
+        </div>
+        <div class="panel-body">
+          <div id="sankeyChart" class="sankey-chart"></div>
+        </div>
+      </div>
+
+      <!-- Withdrawal source chart -->
+      <div class="panel panel-collapsed" id="panel-withdraw" data-default-open="0">
+        <div class="panel-head" onclick="togglePanel('panel-withdraw')">
+          <span class="panel-num">§4</span>
+          <span class="panel-title">退休期取款来源</span>
+          <span class="panel-sub">每年从哪个桶取了多少</span>
+          <span class="panel-toggle">▸</span>
+        </div>
+        <div class="panel-body" id="withdrawBlock">
+          <div class="withdraw-chart-wrap">
+            <canvas id="withdrawChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sensitivity tornado -->
+      <div class="panel panel-collapsed" id="panel-sensitivity" data-default-open="0">
+        <div class="panel-head" onclick="togglePanel('panel-sensitivity')">
+          <span class="panel-num">§5</span>
+          <span class="panel-title">敏感性分析</span>
+          <span class="panel-sub">哪个杠杆最能改变 FIRE 时间？</span>
+          <span class="panel-toggle">▸</span>
+        </div>
+        <div class="panel-body" id="sensitivityBody">
+          <div class="sens-controls">
+            <button class="btn btn-sm btn-primary" id="sensRunBtn" onclick="runAndRenderSensitivity()">▶ 运行分析</button>
+            <span class="sens-hint" id="sensHint">每个变量做 ± 方向扰动，按对 FIRE 年数的影响绝对值排序</span>
+          </div>
+          <div class="sens-result" id="sensResult"></div>
+        </div>
+      </div>
+
+    </div><!-- /view-overview -->
+
+    <!-- ── View: Household ── -->
+    <div class="view" id="view-household">
+      <div class="view-header">
+        <h2 class="view-title">家庭成员</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">人数 <strong class="mono" id="hhCount">1</strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">家庭退休 <strong class="mono" id="hhRetire">—</strong></span>
+        </div>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">每人独立设置出生年和计划退休年。家庭层"退休"以最后一个人退休为准；社保按每人 60 岁分别触发；收入流归属到具体的人，在其退休年自动停。</p>
+        <div id="householdList"></div>
+      </div>
+    </div><!-- /view-household -->
+
+    <!-- ── View: Income ── -->
+    <div class="view" id="view-income">
+      <div class="view-header">
+        <h2 class="view-title">收入来源</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">月收入合计 <strong class="mono accent">¥<span id="incomeTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">储蓄率 <strong class="mono" id="savingsRateDisplay">—</strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" id="addIncomeBtn" style="margin-left:auto">+ 添加收入</button>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">每条收入独立设定增长率和起止年份。退休后停止收入 → 在「事件」中添加「退休」事件；社保开始领取 → 添加「持续性事件」。</p>
+        <div class="income-list" id="incomeList"></div>
+      </div>
+    </div><!-- /view-income -->
+
+    <!-- ── View: Assets ── -->
+    <div class="view" id="view-assets">
+      <div class="view-header">
+        <h2 class="view-title">资产</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">合计 <strong class="mono">¥<span id="assetTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月存入 <strong class="mono accent">¥<span id="cashInflow">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月投资 <strong class="mono">¥<span id="dcaTotal">0</span></strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="refreshAllPrices()" style="margin-left:auto">↻ 刷新行情</button>
+      </div>
+      <div class="view-body">
+        <div class="calendar-hint" id="calendarHint">📅 加载交易日历…</div>
+        <div class="asset-list" id="assetList"></div>
+        <button class="add-btn" onclick="addAsset()">+ 添加资产</button>
+        <div class="hint">
+          <strong>用法：</strong>
+          ① 选类型 ② 输代码（基金 <code>005827</code> / A股 <code>sh600519</code> / 黄金 <code>AU9999</code> / 加密 <code>bitcoin</code> / 港股 <code>00700</code> / 美股 <code>AAPL</code>）
+          ③ 输持仓金额 ④ 设定投方案。持仓金额统一以 ¥ 填写（港股/美股/加密按持仓市值折算）。<br>
+          <strong>个人养老金（IPA）</strong>：每年最多 ¥12,000，税前抵扣，退休前不可取。
+        </div>
+      </div>
+    </div><!-- /view-assets -->
+
+    <!-- ── View: Expenses ── -->
+    <div class="view" id="view-expenses">
+      <div class="view-header">
+        <h2 class="view-title">支出分类</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">月支出合计 <strong class="mono">¥<span id="expCatTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">加权通胀 <strong class="mono" id="expCatWeightedInfl">—</strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="addExpenseCategory()" style="margin-left:auto">+ 添加类别</button>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">每个类别独立的月支出 + 通胀率。医疗 / 教育通胀通常高于 CPI（默认已预设）。Sim 按类别累加，比单一 CPI 更贴近真实长期支出曲线。退休阶段如果在「阶段」里设了 monthlyExpense 覆盖值，将以该值为准（不再按类别拆）。</p>
+        <div class="expense-cat-list" id="expenseCatList"></div>
+      </div>
+    </div><!-- /view-expenses -->
+
+    <!-- ── View: Debts ── -->
+    <div class="view" id="view-debts">
+      <div class="view-header">
+        <h2 class="view-title">债务</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">总余额 <strong class="mono">¥<span id="debtBalanceTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">月还款 <strong class="mono accent" style="color:var(--danger)">¥<span id="debtMonthlyTotal">0</span></strong></span>
+        </div>
+        <button class="btn btn-sm btn-primary" id="addDebtBtn" onclick="addLiability()" style="margin-left:auto">+ 添加债务</button>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">房贷 / 车贷 / 信用贷等。月还款会从现金流中扣除直到还清；还清后该笔月供自动转为可投资金。</p>
+        <div class="debt-list" id="debtList"></div>
+        <div class="hint">
+          <strong>等额本息 vs 等额本金</strong>：
+          ① <strong>等额本息</strong> — 每月还款金额固定，前期利息多本金少；
+          ② <strong>等额本金</strong> — 每月还本金固定，前期总还款多但总利息少。<br>
+          公积金贷款（利率约 3.1%）+ 商业贷款（利率约 3.5-4.5%）可以分别添加为两笔债务。
+        </div>
+      </div>
+    </div><!-- /view-debts -->
+
+    <!-- ── View: Stages ── -->
+    <div class="view" id="view-stages">
+      <div class="view-header">
+        <h2 class="view-title">生命阶段</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">退休 <strong class="mono" id="stageRetireBadge">—</strong></span>
+        </div>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">把人生切成三段，每段独立的月支出 / 收入比例。退休年龄由这里决定（不再依赖事件）。FIRE 时间是「净资产何时触及目标」的信息指标，与计划退休年龄解耦。</p>
+        <div id="stagePanel"></div>
+      </div>
+    </div><!-- /view-stages -->
+
+    <!-- ── View: Goals ── -->
+    <div class="view" id="view-goals">
+      <div class="view-header">
+        <h2 class="view-title">目标</h2>
+        <div class="view-header-meta">
+          <span class="meta-stat">规划数 <strong class="mono" id="goalsCount">0</strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">总规划支出 <strong class="mono">¥<span id="goalsAmountTotal">0</span></strong></span>
+          <span class="meta-divider"></span>
+          <span class="meta-stat">FIRE 推迟 <strong class="mono" id="goalsFireDelta">—</strong></span>
+        </div>
+        <div class="view-header-actions">
+          <button class="btn btn-sm" onclick="addGoalPreset('house')">🏠 买房首付</button>
+          <button class="btn btn-sm" onclick="addGoalPreset('edu')">🎓 教育金</button>
+          <button class="btn btn-sm" onclick="addGoalPreset('car')">🚗 换车</button>
+          <button class="btn btn-sm" onclick="addGoalPreset('study')">✈️ 留学</button>
+          <button class="btn btn-sm btn-primary" onclick="openGoalModal(null)">+ 自定义</button>
+        </div>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">目标 = 计划在某年的一次性大额支出。卡片显示「届时净资产能否覆盖」与「该目标使 FIRE 推迟多少年」。可独立暂停某个目标观察影响（不删除即可恢复）。</p>
+        <div class="goal-list" id="goalList"></div>
+      </div>
+    </div><!-- /view-goals -->
+
+    <!-- ── View: Events ── -->
+    <div class="view" id="view-events">
+      <div class="view-header">
+        <h2 class="view-title">时间线事件</h2>
+        <div class="view-header-actions">
+          <button class="btn btn-sm" onclick="addEventPreset('house')">🏠 买房首付</button>
+          <button class="btn btn-sm" onclick="addEventPreset('child')">👶 生娃加支出</button>
+          <button class="btn btn-sm" onclick="addEventPreset('pension')">🏦 社保领取</button>
+          <button class="btn btn-sm btn-primary" onclick="openEventModal(null)">+ 自定义</button>
+        </div>
+      </div>
+      <div class="view-body">
+        <p class="view-hint">一次性事件（买房首付等）冲减资产；持续性事件（社保、生娃支出）从该年起每月调整现金流。退休时刻在「阶段」中设置。</p>
+        <div class="event-list" id="eventList"></div>
+      </div>
+    </div><!-- /view-events -->
+
+  </main>
+
+  <!-- ═══ Right params panel ═══ -->
+  <aside class="params-panel">
+
+    <div class="preset-row">
+      <button class="preset-btn" data-preset="conservative" onclick="applyPreset(event,'conservative')">保守</button>
+      <button class="preset-btn active" data-preset="balanced"     onclick="applyPreset(event,'balanced')">平衡</button>
+      <button class="preset-btn"         data-preset="aggressive"  onclick="applyPreset(event,'aggressive')">激进</button>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">财富自由目标</span>
+        <span class="value mono">¥<span id="targetVal">10,000,000</span></span>
+      </div>
+      <input type="range" id="target" min="2000000" max="50000000" step="500000" value="10000000">
+      <div id="swrTargetHint" class="param-hint" style="display:none"></div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">月支出</span>
+        <span class="value mono">¥<span id="expenseVal">0</span></span>
+      </div>
+      <input type="range" id="expense" min="0" max="30000" step="500" value="0">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">退休后月支出</span>
+        <span class="value mono"><span id="retirementExpenseVal">同月支出</span></span>
+      </div>
+      <input type="range" id="retirementExpense" min="0" max="30000" step="500" value="0">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">出生年份</span>
+        <span class="value mono"><span id="birthYearVal">1995</span></span>
+      </div>
+      <input type="range" id="birthYear" min="1950" max="2010" step="1" value="1995">
+      <div class="param-hint">用于 IPA 60 岁解锁判断 · 退休前不可提取个人养老金</div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">年化预期收益</span>
+        <span class="value mono"><span id="returnVal">7.0</span>%</span>
+      </div>
+      <input type="range" id="return" min="0" max="20" step="0.5" value="7">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">年化波动率</span>
+        <span class="value mono"><span id="volVal">15</span>%</span>
+      </div>
+      <input type="range" id="vol" min="0" max="40" step="1" value="18">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">通胀率</span>
+        <span class="value mono"><span id="inflVal">2.5</span>%</span>
+      </div>
+      <input type="range" id="infl" min="0" max="8" step="0.1" value="2.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">收入年增长率</span>
+        <span class="value mono"><span id="incomeGrowthVal">3.0</span>%</span>
+      </div>
+      <input type="range" id="incomeGrowth" min="0" max="10" step="0.5" value="3">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">税费 / 摩擦成本</span>
+        <span class="value mono"><span id="taxDragVal">0.5</span>%</span>
+      </div>
+      <input type="range" id="taxDrag" min="0" max="2" step="0.1" value="0.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">安全提取率 (SWR)</span>
+        <span class="value mono"><span id="swrVal">4.0</span>%</span>
+      </div>
+      <input type="range" id="swr" min="2" max="6" step="0.1" value="3.5">
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">退休提取策略</span>
+      </div>
+      <select id="withdrawalStrategy" class="param-select">
+        <option value="fixed">固定金额（通胀调整）</option>
+        <option value="pct">固定比例（SWR %）</option>
+        <option value="gk">Guyton-Klinger（动态护栏）</option>
+      </select>
+      <div class="param-hint" id="withdrawalHint" style="display:none">GK：组合好时按 10% 上调；组合差时按 10% 下调；负回报年跳过通胀。A股高波动场景下显著提升可持续性。</div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-label">
+        <span class="name">模拟年数</span>
+        <span class="value mono"><span id="yearsVal">30</span> 年</span>
+      </div>
+      <input type="range" id="years" min="5" max="50" step="1" value="30">
+    </div>
+
+    <div class="param-group">
+      <label class="toggle toggle-block">
+        <input type="checkbox" id="glidePathEnabled">
+        <span>启用 Glide path（按年龄自动减仓）</span>
+      </label>
+      <div class="glide-config" id="glideConfig" style="display:none">
+        <div class="param-label">
+          <span class="name">权益下限</span>
+          <span class="value mono"><span id="glideFloorVal">30</span>%</span>
+        </div>
+        <input type="range" id="glideFloor" min="0" max="80" step="5" value="30">
+        <div class="param-hint">规则 110 − 年龄 = 目标权益占比，向「现金桶」迁出超出部分。下限防过度保守。</div>
+      </div>
+    </div>
+
+    <div class="params-footer">
+      仅供参考，不构成投资建议<br>
+      预设基于A股历史数据：沪深300含分红年化约9-10%<br>
+      SWR建议3-4%（A股波动高于美股）<br>
+      数据源: 天天基金 / 新浪财经 / 上海黄金交易所
+    </div>
+
+  </aside>
+
+</div><!-- /app-shell -->
+
+<!-- ═══ Goal modal (Preline hs-overlay) ═══ -->
+<div id="goalModal" class="hs-overlay hidden size-full fixed top-0 start-0 z-[80] overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="goalModalTitle">
+  <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-300 mt-0 opacity-0 ease-out transition-all sm:max-w-md sm:w-full m-3 sm:mx-auto min-h-[calc(100%-3.5rem)] flex items-center">
+    <div class="modal w-full pointer-events-auto" onclick="event.stopPropagation()">
+      <h3 id="goalModalTitle">添加目标</h3>
+      <div class="form-group">
+        <label>目标名称</label>
+        <input type="text" id="goalName" placeholder="例：买房首付 / 留学">
+      </div>
+      <div class="form-group">
+        <label>目标年份</label>
+        <input type="number" id="goalYear" min="2024" max="2080" step="1">
+      </div>
+      <div class="form-group">
+        <label>目标金额 ¥（正数）</label>
+        <input type="number" id="goalAmount" step="10000" min="0">
+      </div>
+      <div class="form-group">
+        <label>优先级</label>
+        <select id="goalPriority">
+          <option value="1">必须达成（买房 / 子女教育）</option>
+          <option value="2">希望达成（换车 / 家电）</option>
+          <option value="3">可选（升级旅行 / 奢侈）</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn" data-hs-overlay="#goalModal">取消</button>
+        <button class="btn btn-primary" onclick="saveGoalModal()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Event modal (Preline hs-overlay) ═══ -->
+<div id="eventModal" class="hs-overlay hidden size-full fixed top-0 start-0 z-[80] overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="eventModalTitle">
+  <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-300 mt-0 opacity-0 ease-out transition-all sm:max-w-md sm:w-full m-3 sm:mx-auto min-h-[calc(100%-3.5rem)] flex items-center">
+    <div class="modal w-full pointer-events-auto" onclick="event.stopPropagation()">
+      <h3 id="eventModalTitle">添加事件</h3>
+      <div class="form-group">
+        <label>事件名称</label>
+        <input type="text" id="evName" placeholder="例：买房首付">
+      </div>
+      <div class="form-group">
+        <label>触发年份</label>
+        <input type="number" id="evYear" min="2024" max="2080" step="1" value="2032">
+      </div>
+      <div class="form-group">
+        <label>类型</label>
+        <select id="evType" onchange="onEventTypeChange()">
+          <option value="lump">一次性（正=收入，负=支出）</option>
+          <option value="monthly">持续性（每月固定金额从该年起）</option>
+        </select>
+      </div>
+      <div class="form-group" id="evAmountGroup">
+        <label id="evAmountLabel">金额 ¥（正=收入，负=支出）</label>
+        <input type="number" id="evAmount" step="10000" value="-1500000">
+      </div>
+      <div class="form-actions">
+        <button class="btn" data-hs-overlay="#eventModal">取消</button>
+        <button class="btn btn-primary" onclick="saveEventModal()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script>
+// Auth guard — 使用 Auth 抽象层（自动适配 supabase / mock）
+(async function authGuard() {
+  try {
+    const session = await window.Auth.getSession();
+    const demoMode = sessionStorage.getItem('fire-demo-mode');
+    if (!session && !demoMode) {
+      window.location.replace('/');
+    }
+  } catch (e) {
+    console.warn('[guard] session check failed', e);
+    if (!sessionStorage.getItem('fire-demo-mode')) {
+      window.location.replace('/');
+    }
+  }
+})();
+</script>
+<script src="storage.js"></script>
+<script src="calendar.js"></script>
+<script src="api.js"></script>
+<script src="tax.js"></script>
+<script src="simulation.js"></script>
+<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script>
+<script>
+// Preline 显式初始化（兜底 DOMContentLoaded 时机）
+function _initPrelineApp() {
+  if (window.HSStaticMethods?.autoInit) window.HSStaticMethods.autoInit();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initPrelineApp);
+} else {
+  _initPrelineApp();
+}
+</script>
+</body>
+</html>

@@ -4,3 +4,11 @@ __pycache__/
 data-check/outputs/
 .idea/
 .vscode/
+
+# UI QA screenshots
+.ui-audit/
+
+# node / next
+node_modules/
+.next/
+*.log

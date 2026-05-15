@@ -3,6 +3,8 @@
 // Outputs: { sampledMonths, p10, p50, p90, successRate, sustainabilityRate,
 //            yearsToFire, coastFireYears, savingsRate, initial }
 
+import { grossToNet } from './tax';
+
 const RUNS = 5000;
 const SAMPLE_EVERY = 3;
 
@@ -278,8 +280,8 @@ function monthlyIncomeAt(plan, simStartYear, m) {
         if (currentYear < start || currentYear >= end) continue;
         const yearsActive = currentYear - start;
         const grown = (Number(s.monthlyAmount) || 0) * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
-        if (s.type === 'gross' && taxConfig && window.TAX) {
-          total += window.TAX.grossToNet(grown, taxConfig).net;
+        if (s.type === 'gross' && taxConfig) {
+          total += grossToNet(grown, taxConfig).net;
         } else {
           total += grown;
         }
@@ -300,8 +302,8 @@ function monthlyIncomeAt(plan, simStartYear, m) {
     if (currentYear < start || currentYear >= end) return sum;
     const yearsActive = currentYear - start;
     const grown = (Number(s.monthlyAmount) || 0) * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
-    if (s.type === 'gross' && taxConfig && window.TAX) {
-      return sum + window.TAX.grossToNet(grown, taxConfig).net;
+    if (s.type === 'gross' && taxConfig) {
+      return sum + grossToNet(grown, taxConfig).net;
     }
     return sum + grown;
   }, 0);
@@ -912,3 +914,21 @@ function runSim(plan) {
     yearlyRows,
   };
 }
+
+// ESM exports
+export {
+  RUNS, SAMPLE_EVERY,
+  gaussian, computeAssetValue, planNetWorth,
+  ASSET_CATEGORY_DEFAULTS, IPA_UNLOCK_AGE,
+  assetExpectedReturn, assetVolatility, assetBucket, portfolioExpectedReturn,
+  drainFromBuckets, rebalanceTaxableToCash, depositCash,
+  userAgeAtMonth,
+  PENSION_START_AGE, pensionForPerson, pensionMonthlyBenefit, healthcareGapAtMonth,
+  totalPropertyCashFlow,
+  assetMonthlyContrib, cashMonthlyInflow, investMonthlyTotal,
+  monthlyIncomeAt, currentMonthlyIncome,
+  liabilityMonthlyPayment, totalMonthlyDebtPayment, summarizeLiabilities,
+  buildEventTimeline,
+  householdRetireYear, stageAt, stageMonthlyExpense, stageMonthlyExpenseAt, stageIncomeMultiplier,
+  runHistoricalSim, runSim,
+};

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRE Planner — 中国版财富自由规划器</title>
+<meta name="description" content="把"几岁能 FIRE"从估算变成数学：5 城市五险一金 / 7 级累进个税 / 夫妻独立退休 / IPA 60 岁解锁 / 房贷与社保精算。">
+
+<!-- Tailwind Play CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50:  '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#ef4444',
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+        },
+      },
+      fontFamily: {
+        sans:  ['Inter', 'PingFang SC', 'system-ui', 'sans-serif'],
+        mono:  ['JetBrains Mono', 'SF Mono', 'Menlo', 'monospace'],
+      },
+    },
+  },
+  // Preline 自定义变体（必须手工注册，因为 Play CDN 不能 require('preline/plugin')）
+  plugins: [
+    function ({ addVariant }) {
+      addVariant('hs-overlay-open',         ['&.open', '.open &']);
+      addVariant('hs-overlay-backdrop-open',['&.open']);
+      addVariant('hs-accordion-active',     ['&.active', '.active &']);
+      addVariant('hs-dropdown-open',        ['&.open', '.open &']);
+      addVariant('hs-collapse-open',        ['&.open', '.open &']);
+      addVariant('hs-tab-active',           ['&.active', '.active &']);
+    }
+  ],
+};
+</script>
+<!-- Preline UI (free, MIT) — accordion / overlay / dropdown 等交互组件 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-white text-slate-900 antialiased">
+
+<!-- ═══ Navbar ═══ -->
+<header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 bg-brand-700 text-white font-bold rounded-md grid place-items-center text-sm">F</div>
+      <span class="font-semibold text-slate-900">FIRE Planner</span>
+    </a>
+
+    <div class="hidden md:flex items-center gap-8 text-sm text-slate-600">
+      <a href="#features" class="hover:text-slate-900 transition">功能</a>
+      <a href="#how" class="hover:text-slate-900 transition">原理</a>
+      <a href="#pricing" class="hover:text-slate-900 transition">定价</a>
+      <a href="#faq" class="hover:text-slate-900 transition">问答</a>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button onclick="openAuthModal('login')" class="hidden sm:inline-flex text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-2 rounded-md transition">登录</button>
+      <button onclick="openAuthModal('signup')" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-md transition">
+        免费注册
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<!-- ═══ Hero ═══ -->
+<section class="relative overflow-hidden">
+  <!-- Decorative gradient -->
+  <div class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
+    <div class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-400 to-rose-300 opacity-25 sm:left-[calc(50%-30rem)] sm:w-[72rem]" style="clip-path:polygon(74.1% 44.1%,100% 61.6%,97.5% 26.9%,85.5% 0.1%,80.7% 2%,72.5% 32.5%,60.2% 62.4%,52.4% 68.1%,47.5% 58.3%,45.2% 34.5%,27.5% 76.7%,0.1% 64.9%,17.9% 100%,27.6% 76.8%,76.1% 97.7%,74.1% 44.1%)"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+    <div class="mx-auto max-w-3xl text-center">
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-brand-700 ring-1 ring-brand-200 bg-brand-50 mb-6">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+        </span>
+        14 个分析维度全部用中国规则建模
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
+        算清楚<br class="sm:hidden">你<span class="text-brand-700">几岁</span>能 FIRE。
+      </h1>
+      <p class="mt-6 text-lg leading-8 text-slate-600 max-w-2xl mx-auto">
+        把 ProjectionLab 的全套建模能力，用中国规则重做一遍。五险一金、个税专项扣除、夫妻独立退休、个人养老金 60 岁锁定、房贷拖累、社保精算——5,000 次蒙特卡洛 / 2 秒内输出。
+      </p>
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a href="/app" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-5 py-3 rounded-lg transition shadow-sm">
+          立即试用（无需注册）
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </a>
+        <button onclick="openAuthModal('signup')" class="inline-flex items-center gap-2 text-slate-700 hover:text-slate-900 text-sm font-semibold px-5 py-3 transition">
+          注册保存方案
+        </button>
+      </div>
+      <p class="mt-6 text-xs text-slate-500 font-mono">数据本地优先 · 端到端加密 · 不向任何第三方共享</p>
+    </div>
+
+    <!-- App preview card -->
+    <div class="mt-16 max-w-5xl mx-auto">
+      <div class="rounded-xl bg-slate-900 p-2 ring-1 ring-slate-900/10 shadow-2xl">
+        <div class="rounded-lg bg-white overflow-hidden">
+          <!-- Mock app header -->
+          <div class="flex items-center gap-1.5 bg-slate-50 border-b border-slate-200 px-4 py-2.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+            <div class="ml-3 text-xs text-slate-500 font-mono">fire-planner / 总览</div>
+          </div>
+          <!-- Mock app content -->
+          <div class="p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div class="bg-slate-50 rounded-md p-3 border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase tracking-wider">FIRE 预计达成</div>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1">2043</div>
+                <div class="text-xs text-brand-700 mt-0.5">17.5 年后</div>
+              </div>
+              <div class="bg-slate-50 rounded-md p-3 border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase tracking-wider">达成概率</div>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1">92.9%</div>
+                <div class="text-xs text-slate-500 mt-0.5">退休可持续 100%</div>
+              </div>
+              <div class="bg-slate-50 rounded-md p-3 border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase tracking-wider">当前储蓄率</div>
+                <div class="text-2xl font-bold text-slate-900 font-mono mt-1">48%</div>
+                <div class="text-xs text-slate-500 mt-0.5">税后口径</div>
+              </div>
+              <div class="bg-brand-50 rounded-md p-3 border border-brand-200">
+                <div class="text-xs text-brand-700 uppercase tracking-wider">Coast FIRE</div>
+                <div class="text-2xl font-bold text-brand-700 font-mono mt-1">2036</div>
+                <div class="text-xs text-brand-600 mt-0.5">10.75 年后可停投</div>
+              </div>
+            </div>
+            <!-- Mock chart -->
+            <div class="h-48 bg-gradient-to-t from-slate-50 to-white rounded-md border border-slate-200 flex items-end p-4 gap-1">
+              <div class="flex-1 bg-emerald-400/70 rounded-sm" style="height:18%"></div>
+              <div class="flex-1 bg-emerald-400/70 rounded-sm" style="height:22%"></div>
+              <div class="flex-1 bg-emerald-400/70 rounded-sm" style="height:28%"></div>
+              <div class="flex-1 bg-emerald-400/70 rounded-sm" style="height:34%"></div>
+              <div class="flex-1 bg-emerald-400/70 rounded-sm" style="height:42%"></div>
+              <div class="flex-1 bg-blue-400/70 rounded-sm" style="height:50%"></div>
+              <div class="flex-1 bg-blue-400/70 rounded-sm" style="height:58%"></div>
+              <div class="flex-1 bg-blue-400/70 rounded-sm" style="height:64%"></div>
+              <div class="flex-1 bg-blue-400/70 rounded-sm" style="height:72%"></div>
+              <div class="flex-1 bg-amber-400/70 rounded-sm" style="height:78%"></div>
+              <div class="flex-1 bg-amber-400/70 rounded-sm" style="height:84%"></div>
+              <div class="flex-1 bg-amber-400/70 rounded-sm" style="height:88%"></div>
+              <div class="flex-1 bg-violet-400/70 rounded-sm" style="height:92%"></div>
+              <div class="flex-1 bg-violet-400/70 rounded-sm" style="height:95%"></div>
+              <div class="flex-1 bg-violet-400/70 rounded-sm" style="height:98%"></div>
+            </div>
+            <div class="mt-3 flex items-center gap-4 text-xs text-slate-500 font-mono">
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-emerald-400"></span>现金</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-blue-400"></span>应税</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-amber-400"></span>IPA</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-violet-400"></span>房产</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Stats ═══ -->
+<section class="bg-slate-50 border-y border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      <div>
+        <dt class="text-sm text-slate-600">建模维度</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">14</dd>
+        <dd class="text-xs text-slate-500 mt-1">对齐 ProjectionLab</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-slate-600">蒙特卡洛模拟</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">5,000<span class="text-base text-slate-500">/ 次</span></dd>
+        <dd class="text-xs text-slate-500 mt-1">按需重跑</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-slate-600">个税档</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">7<span class="text-base text-slate-500"> 级累进</span></dd>
+        <dd class="text-xs text-slate-500 mt-1">+ 7 项专项扣除</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-slate-600">完整模拟耗时</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">2.18<span class="text-base text-slate-500"> s</span></dd>
+        <dd class="text-xs text-slate-500 mt-1">5 资产 × 35 年</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- ═══ Features ═══ -->
+<section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <div class="max-w-3xl mx-auto text-center mb-16">
+    <h2 class="text-base font-semibold text-brand-700 tracking-wider uppercase">能力</h2>
+    <p class="mt-3 text-4xl font-bold tracking-tight text-slate-900">这是规划器，不是计算器</p>
+    <p class="mt-6 text-lg text-slate-600">市面上的 FIRE 计算器只会算"按 7% 复利"。真实场景里你得算个税、五险一金、买房、生娃、配偶收入、医疗通胀、社保领取、IPA 60 岁解锁。</p>
+  </div>
+
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Feature 1: 税务 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">个税精算</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">5 城市五险一金 + 7 级累进个税 + 7 项专项附加扣除。税前月薪输入，自动算到实发，边际税档跟着收入水位走。</p>
+    </div>
+
+    <!-- Feature 2: 夫妻 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">夫妻建模</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">双方独立的出生年、退休年、收入流。家庭退休 = 最后退休那个人。社保按各自 60 岁分别触发。</p>
+    </div>
+
+    <!-- Feature 3: 房产 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">房产 / 资产桶</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">自住 vs 出租，物业费 + 租金 + 升值率独立建模。资产分 现金 / 应税 / IPA / 房产 四桶，退休按顺序取款。</p>
+    </div>
+
+    <!-- Feature 4: 社保 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">社保精算</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">基础养老金（社平 × 缴费指数 × 年限）+ 个人账户养老金，60 岁触发。配合医疗缺口建模退休后真实开销。</p>
+    </div>
+
+    <!-- Feature 5: 可视化 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">14 种可视化</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">净值堆叠面积图、桑基现金流图、退休期取款来源、敏感性 tornado、对比方案表、年度现金流逐年表。</p>
+    </div>
+
+    <!-- Feature 6: 目标 -->
+    <div class="rounded-xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-sm transition">
+      <div class="w-10 h-10 rounded-lg bg-brand-50 grid place-items-center mb-4">
+        <svg class="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-900 mb-2">多目标 + 可持续性</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">买房 / 教育金 / 留学等独立目标，自动算每个目标推迟 FIRE 几年。Guyton-Klinger 动态提取策略保护极端市场。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ How it works ═══ -->
+<section id="how" class="bg-slate-900 text-slate-100 py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto text-center mb-16">
+      <h2 class="text-base font-semibold text-brand-400 tracking-wider uppercase">原理</h2>
+      <p class="mt-3 text-4xl font-bold tracking-tight">三步从输入到 FIRE 日期</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="relative">
+        <div class="absolute -left-2 top-0 text-7xl font-bold text-brand-700/20 font-mono leading-none select-none">01</div>
+        <div class="relative">
+          <h3 class="text-lg font-semibold mb-3">输入家庭画像</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">本人 + 配偶各自的出生年 / 计划退休年 / 税前月薪。资产分类填（现金 / A 股 / 公募 / IPA / 房产）。每个资产可单独设预期收益。</p>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="absolute -left-2 top-0 text-7xl font-bold text-brand-700/20 font-mono leading-none select-none">02</div>
+        <div class="relative">
+          <h3 class="text-lg font-semibold mb-3">配置目标与事件</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">买房首付 / 教育金 / Gap Year 等独立目标卡片。生命阶段（在职 / 过渡 / 退休）独立支出。社保启用、医疗缺口、Glide path 全部可选。</p>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="absolute -left-2 top-0 text-7xl font-bold text-brand-700/20 font-mono leading-none select-none">03</div>
+        <div class="relative">
+          <h3 class="text-lg font-semibold mb-3">查看分析结果</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">FIRE 时间 / 成功率 / 终值 P10-P50-P90 / Coast FIRE 节点。点开敏感性 tornado 看哪个杠杆最有效，桑基图看每月现金去哪了。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Pricing ═══ -->
+<section id="pricing" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <div class="max-w-3xl mx-auto text-center mb-16">
+    <h2 class="text-base font-semibold text-brand-700 tracking-wider uppercase">定价</h2>
+    <p class="mt-3 text-4xl font-bold tracking-tight text-slate-900">早期用户全部免费</p>
+    <p class="mt-6 text-lg text-slate-600">建模能力本身不分付费档。付费版差异是并发量与协作。</p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    <!-- Free -->
+    <div class="rounded-2xl border border-slate-200 p-8 flex flex-col">
+      <h3 class="text-lg font-semibold text-slate-900">免费</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold tracking-tight text-slate-900 font-mono">¥0</span>
+        <span class="text-sm text-slate-500 ml-1">/ 永久</span>
+      </p>
+      <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>最多 3 个方案</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>14 个分析维度全开</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>夫妻建模</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>本地 + 云端同步</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>JSON 导入导出</li>
+      </ul>
+      <button onclick="openAuthModal('signup')" class="mt-8 w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5 rounded-lg transition">免费注册</button>
+    </div>
+
+    <!-- Pro (featured) -->
+    <div class="relative rounded-2xl border-2 border-brand-700 p-8 flex flex-col bg-white shadow-lg">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-700 text-white text-xs font-semibold px-3 py-1 rounded-full">推荐</div>
+      <h3 class="text-lg font-semibold text-slate-900">专业版</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold tracking-tight text-slate-900 font-mono">¥29</span>
+        <span class="text-sm text-slate-500 ml-1">/ 月</span>
+      </p>
+      <p class="text-xs text-brand-700 mt-1 font-medium">早期用户限时 ¥19/月</p>
+      <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><strong class="text-slate-900">无限方案</strong></li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><strong class="text-slate-900">实时行情自动刷新</strong></li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><strong class="text-slate-900">PDF 报告导出</strong></li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>历史压力场景库（2008/2015/2018）</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>优先邮件支持</li>
+      </ul>
+      <button onclick="openAuthModal('signup')" class="mt-8 w-full bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold py-2.5 rounded-lg transition">14 天免费试用</button>
+    </div>
+
+    <!-- Family -->
+    <div class="rounded-2xl border border-slate-200 p-8 flex flex-col">
+      <h3 class="text-lg font-semibold text-slate-900">家庭</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold tracking-tight text-slate-900 font-mono">¥49</span>
+        <span class="text-sm text-slate-500 ml-1">/ 月</span>
+      </p>
+      <p class="text-xs text-slate-500 mt-1">即将上线</p>
+      <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>专业版全部</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>多用户共享（≤ 4 人）</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>共享方案 + 协作编辑</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>子女教育金独立追踪</li>
+        <li class="flex gap-3"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>财务顾问咨询（1 次/月）</li>
+      </ul>
+      <button class="mt-8 w-full border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-semibold py-2.5 rounded-lg transition">即将上线</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="bg-slate-50 border-t border-slate-200">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="text-center mb-16">
+      <h2 class="text-base font-semibold text-brand-700 tracking-wider uppercase">问答</h2>
+      <p class="mt-3 text-4xl font-bold tracking-tight text-slate-900">常见问题</p>
+    </div>
+
+    <!-- Preline hs-accordion -->
+    <div class="hs-accordion-group divide-y divide-slate-200 border-y border-slate-200">
+      <div class="hs-accordion py-4 active" id="faq-1">
+        <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-controls="faq-collapse-1" aria-expanded="true">
+          <span class="text-base font-semibold">我的财务数据安全吗？</span>
+          <svg class="hs-accordion-active:hidden block size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <svg class="hs-accordion-active:block hidden size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <div id="faq-collapse-1" class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="faq-1">
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">本地优先：你的输入首先存浏览器 localStorage，登录后才同步到云端。云端用 Postgres + 行级安全策略（RLS），每个用户只能访问自己的数据。我们不会查看、不会出售、不会向任何第三方共享。</p>
+        </div>
+      </div>
+
+      <div class="hs-accordion py-4" id="faq-2">
+        <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-controls="faq-collapse-2" aria-expanded="false">
+          <span class="text-base font-semibold">预期收益率怎么定的？</span>
+          <svg class="hs-accordion-active:hidden block size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <svg class="hs-accordion-active:block hidden size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <div id="faq-collapse-2" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="faq-2">
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">基于 A 股 2005-2024 含分红口径：公募基金 8%/16%、A 股 ETF 9%/18%、港股 7%/20%、美股 10%/16%、黄金 6%/15%、IPA 5%/10%。每个资产可单独覆盖。Monte Carlo 5,000 次输出 P10/P50/P90 三档，不是单一确定性数字。</p>
+        </div>
+      </div>
+
+      <div class="hs-accordion py-4" id="faq-3">
+        <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-controls="faq-collapse-3" aria-expanded="false">
+          <span class="text-base font-semibold">跟 ProjectionLab 比有什么差异？</span>
+          <svg class="hs-accordion-active:hidden block size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <svg class="hs-accordion-active:block hidden size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <div id="faq-collapse-3" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="faq-3">
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">PL 是美国市场产品，不处理中国五险一金、个税专项附加扣除、IPA（个人养老金）60 岁解锁、社保精算公式、A 股波动率特征。我们对标 PL 全部分析维度，但全部用中国规则建模。</p>
+        </div>
+      </div>
+
+      <div class="hs-accordion py-4" id="faq-4">
+        <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-controls="faq-collapse-4" aria-expanded="false">
+          <span class="text-base font-semibold">注册需要哪些信息？</span>
+          <svg class="hs-accordion-active:hidden block size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <svg class="hs-accordion-active:block hidden size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <div id="faq-collapse-4" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="faq-4">
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">仅邮箱 + 密码。不需要电话、身份证、收入证明。财务数据完全在你的浏览器和你自己的云端账户里。</p>
+        </div>
+      </div>
+
+      <div class="hs-accordion py-4" id="faq-5">
+        <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-controls="faq-collapse-5" aria-expanded="false">
+          <span class="text-base font-semibold">付费有什么不同？</span>
+          <svg class="hs-accordion-active:hidden block size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <svg class="hs-accordion-active:block hidden size-5 text-slate-500 group-hover:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <div id="faq-collapse-5" class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="faq-5">
+          <p class="mt-3 text-sm text-slate-600 leading-relaxed">免费版功能完整可用（你可以用它做一辈子规划）。专业版提供更多并发方案 + 实时行情自动刷新 + 夫妻协作 + PDF 报告 + 历史压力测试场景库。是否付费根据你的使用深度决定，不是功能阉割。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <div class="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-16 sm:py-24 sm:px-12 lg:px-24 text-center">
+    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">把"我多久能 FIRE"<br class="sm:hidden">变成<span class="text-brand-400">可信的数字</span></h2>
+    <p class="mt-6 text-lg text-slate-300 max-w-xl mx-auto">5 分钟填完家庭画像，看见你之前用 Excel 永远算不出来的答案。</p>
+    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href="/app" class="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-sm font-semibold px-6 py-3 rounded-lg transition">立即试用 →</a>
+      <button onclick="openAuthModal('signup')" class="inline-flex items-center gap-2 text-white hover:text-brand-400 text-sm font-semibold px-6 py-3 transition">免费注册</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Footer ═══ -->
+<footer class="border-t border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div class="col-span-2">
+        <div class="flex items-center gap-2.5 mb-3">
+          <div class="w-8 h-8 bg-brand-700 text-white font-bold rounded-md grid place-items-center text-sm">F</div>
+          <span class="font-semibold text-slate-900">FIRE Planner</span>
+        </div>
+        <p class="text-sm text-slate-600 max-w-sm">中国版财富自由规划器。把"几岁能 FIRE"从估算变成数学。</p>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-slate-900 mb-3">产品</h4>
+        <ul class="space-y-2 text-sm text-slate-600">
+          <li><a href="#features" class="hover:text-slate-900 transition">功能</a></li>
+          <li><a href="#pricing" class="hover:text-slate-900 transition">定价</a></li>
+          <li><a href="#faq" class="hover:text-slate-900 transition">问答</a></li>
+          <li><a href="/app" class="hover:text-slate-900 transition">在线试用</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-slate-900 mb-3">法律</h4>
+        <ul class="space-y-2 text-sm text-slate-600">
+          <li><a href="/privacy" class="hover:text-slate-900 transition">隐私政策</a></li>
+          <li><a href="/terms" class="hover:text-slate-900 transition">服务条款</a></li>
+          <li><a href="mailto:support@example.com" class="hover:text-slate-900 transition">联系</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-12 pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <span>© 2026 FIRE Planner. All rights reserved.</span>
+      <span class="font-mono">仅供参考 · 不构成投资建议</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ Auth overlay (Preline hs-overlay) ═══ -->
+<div id="authModal" class="hs-overlay hidden size-full fixed top-0 start-0 z-[80] overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="authModalTitle">
+  <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-md sm:w-full m-3 sm:mx-auto min-h-[calc(100%-3.5rem)] flex items-center">
+    <div class="w-full flex flex-col bg-white border border-slate-200 shadow-2xl rounded-xl pointer-events-auto">
+      <div class="flex justify-between items-center py-3 px-6 border-b border-slate-200">
+        <h3 id="authModalTitle" class="font-bold text-slate-900 text-lg">登录</h3>
+        <button type="button" class="size-8 inline-flex justify-center items-center gap-x-2 rounded-full border border-transparent bg-slate-100 text-slate-800 hover:bg-slate-200 focus:outline-none transition" data-hs-overlay="#authModal" aria-label="关闭">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">邮箱</label>
+            <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email"
+                   class="py-2 px-3 block w-full border border-slate-300 rounded-lg text-sm focus:border-brand-500 focus:ring-brand-500 outline-none transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">密码</label>
+            <input type="password" id="authPassword" placeholder="至少 8 位" autocomplete="current-password"
+                   class="py-2 px-3 block w-full border border-slate-300 rounded-lg text-sm focus:border-brand-500 focus:ring-brand-500 outline-none transition">
+          </div>
+        </div>
+
+        <div id="authError" class="mt-3 p-3 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-700 hidden font-mono"></div>
+
+        <button id="authSubmitBtn" onclick="submitAuth()" class="mt-6 w-full py-2.5 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition">登录</button>
+
+        <div class="mt-6 pt-6 border-t border-slate-200 text-center text-sm text-slate-600">
+          <span id="authSwitchPrompt">还没账号？</span>
+          <a href="#" onclick="switchAuthMode();return false;" id="authSwitchLink" class="ml-1 font-medium text-brand-700 hover:text-brand-800">免费注册</a>
+        </div>
+
+        <p id="authNoteText" class="mt-4 text-xs text-slate-500 text-center font-mono">演示模式 — 任何邮箱密码均可登录</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script src="landing.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script>
+<script>
+// 显式初始化 Preline（兜底 DOMContentLoaded 时机问题）
+function _initPreline() {
+  if (window.HSStaticMethods?.autoInit) {
+    window.HSStaticMethods.autoInit();
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initPreline);
+} else {
+  _initPreline();
+}
+
+// Bridge: openAuthModal / closeAuthModal → Preline HSOverlay
+// 兼容多种 API 写法 + 加诊断日志
+(function () {
+  const log = (...a) => console.log('[auth-modal]', ...a);
+
+  function tryPrelineOpen(el) {
+    if (!window.HSOverlay) { log('HSOverlay 未定义 → fallback'); return false; }
+    try {
+      // Preline 2.x: HSOverlay.open 接收 selector 字符串或元素
+      if (typeof window.HSOverlay.open === 'function') {
+        window.HSOverlay.open('#' + el.id);
+        log('HSOverlay.open(#' + el.id + ') 调用成功');
+        return true;
+      }
+      log('HSOverlay 无 open 方法 → fallback');
+    } catch (e) { log('HSOverlay.open error', e); }
+    return false;
+  }
+  function tryPrelineClose(el) {
+    if (!window.HSOverlay) return false;
+    try {
+      if (typeof window.HSOverlay.close === 'function') {
+        window.HSOverlay.close('#' + el.id);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  const oldOpen = window.openAuthModal;
+  window.openAuthModal = function (mode) {
+    if (typeof oldOpen === 'function') oldOpen(mode);
+    const el = document.getElementById('authModal');
+    if (!el) { log('找不到 #authModal'); return; }
+    if (!tryPrelineOpen(el)) {
+      el.classList.remove('hidden');
+      el.classList.add('open');
+      log('Fallback: 直接加 .open class');
+    }
+  };
+  const oldClose = window.closeAuthModal;
+  window.closeAuthModal = function () {
+    const el = document.getElementById('authModal');
+    if (el && !tryPrelineClose(el)) {
+      el.classList.add('hidden');
+      el.classList.remove('open');
+    }
+    if (typeof oldClose === 'function') oldClose();
+  };
+
+  // 启动诊断
+  setTimeout(() => {
+    log('Preline 状态：',
+      'HSOverlay=' + (typeof window.HSOverlay),
+      'HSAccordion=' + (typeof window.HSAccordion),
+      'HSStaticMethods=' + (typeof window.HSStaticMethods)
+    );
+  }, 500);
+})();
+</script>
+</body>
+</html>

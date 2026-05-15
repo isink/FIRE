@@ -42,9 +42,35 @@ def add_cors(resp):
 
 
 # ============ Demo 静态站点 ============
+# /        → landing.html (营销首页)
+# /app     → app.html     (应用本体，前端 auth 守卫)
+# /account → account.html (Phase 23, 占位 302→/app)
+# 静态资源（*.js, *.css, *.svg, /api/*）保持原路径
 @app.route("/")
 def index():
-    return send_from_directory(DEMO_DIR, "index.html")
+    return send_from_directory(DEMO_DIR, "landing.html")
+
+
+@app.route("/app")
+@app.route("/app/")
+def app_page():
+    return send_from_directory(DEMO_DIR, "app.html")
+
+
+@app.route("/account")
+@app.route("/account/")
+def account_page():
+    return send_from_directory(DEMO_DIR, "account.html")
+
+
+@app.route("/privacy")
+def privacy_page():
+    return send_from_directory(DEMO_DIR, "privacy.html")
+
+
+@app.route("/terms")
+def terms_page():
+    return send_from_directory(DEMO_DIR, "terms.html")
 
 
 # ============ 包装：统一错误响应 ============

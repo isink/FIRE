@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   FIRE Planner — Design Tokens v1
+   原则: 数据是主角, 墨水克制, 层级靠 surface 不靠描边,
+        品牌红只干一件事 (品牌/CTA/target线/hero描边)。
+   颜色全部 HSL 通道三元组, 经 hsl(var(--x) / <alpha>) 消费,
+   支持 shadcn 的 /opacity 修饰符。
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* ---- 中性 ramp (slate, 冷调, 撑起 95% 界面) ---- */
+    --canvas:          210 40% 98%;   /* app 最底背景 #f8fafc */
+    --surface:         0 0% 100%;     /* 卡片/主表面 #ffffff */
+    --surface-sunken:  210 40% 96.5%; /* 斑马/inset/输入底 #f1f5f9 */
+    --text-1:          222 47% 11%;   /* 标题/关键数字 slate-900 */
+    --text-2:          215 19% 35%;   /* 正文/标签 slate-600 */
+    --text-3:          215 16% 57%;   /* 辅助/单位/禁用 slate-400~500 */
+    --border-hairline: 214 32% 91%;   /* 1px 发丝线 slate-200 */
+    --border-strong:   213 27% 84%;   /* 输入框/强调分隔 slate-300 */
+
+    /* ---- 品牌红 止赤 #b91c1c — 唯一语义: 品牌 + 主操作 ---- */
+    --brand:            0 74% 42%;
+    --brand-foreground: 0 0% 100%;
+
+    /* ---- 数据语义色 (中国惯例: 红=涨/盈, 绿=跌/亏; 全部去饱和) ---- */
+    --gain:    353 75% 45%;  /* 涨/盈/正 #cf1322 — 刻意比品牌红更品红, 物理隔离 */
+    --loss:    95 80% 27%;   /* 跌/亏/负 #3f8600 苍绿 */
+    --locked:  215 16% 65%;  /* 锁定/暂停 (IPA未解锁) slate-400 */
+
+    /* ---- 图表单色阶梯 (杀彩虹: 现金→应税→IPA→房产) ---- */
+    --chart-1: 213 27% 84%;  /* 现金 slate-300 */
+    --chart-2: 215 16% 47%;  /* 应税 slate-500 */
+    --chart-3: 215 25% 27%;  /* IPA   slate-700 */
+    --chart-4: 215 20% 65%;  /* 房产 slate-400 */
+
+    /* ---- shadcn 语义别名 (组件只吃这些) ---- */
+    --background:            var(--surface);
+    --foreground:            var(--text-1);
+    --card:                  var(--surface);
+    --card-foreground:       var(--text-1);
+    --popover:               var(--surface);
+    --popover-foreground:    var(--text-1);
+    --primary:               var(--brand);
+    --primary-foreground:    var(--brand-foreground);
+    --secondary:             var(--surface-sunken);
+    --secondary-foreground:  var(--text-1);
+    --muted:                 var(--surface-sunken);
+    --muted-foreground:      var(--text-2);
+    --accent:                var(--surface-sunken);
+    --accent-foreground:     var(--text-1);
+    --destructive:           0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border:                var(--border-hairline);
+    --input:                 var(--border-hairline);
+    --ring:                  var(--brand);
+    --radius:                0.5rem;
+  }
+
+  * { @apply border-border; }
+
+  body {
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* 焦点环统一 (可信感: 键盘可达, 不刺眼) */
+  :focus-visible {
+    outline: none;
+  }
+
+  /* 克制滚动条 */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border-radius: 999px;
+    border: 3px solid hsl(var(--canvas));
+  }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-3)); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.16);
+    color: hsl(var(--text-1));
+  }
+}
+
+@layer utilities {
+  /* 数字是产品本体: 全部 mono + tabular, 单位与数字同基线 */
+  .mono,
+  .tnum {
+    font-family: var(--font-mono), 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv01" 1;
+  }
+}
+
+/* ---- 公用 slider (任何残留 native range 兜底; 主用 Radix Slider) ---- */
+input[type="range"].param-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    hsl(var(--brand)) 0%,
+    hsl(var(--brand)) var(--rng, 50%),
+    hsl(var(--border-strong)) var(--rng, 50%)
+  );
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].param-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: hsl(var(--brand));
+  border: 2px solid hsl(var(--surface));
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 3px hsl(var(--text-1) / 0.18);
+  transition: transform 0.12s cubic-bezier(.2, 0, 0, 1);
+}
+input[type="range"].param-range::-webkit-slider-thumb:hover { transform: scale(1.18); }

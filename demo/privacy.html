@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私政策 · FIRE Planner</title>
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+tailwind.config = {
+  theme: { extend: { colors: { brand: { 700:'#b91c1c',800:'#991b1b' } }, fontFamily: { sans:['Inter','PingFang SC','system-ui','sans-serif'] } } },
+  plugins: [
+    function ({ addVariant }) {
+      addVariant('hs-accordion-active', ['&.active', '.active &']);
+    }
+  ],
+};
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-white text-slate-900 antialiased min-h-screen">
+
+<header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+  <nav class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 bg-brand-700 text-white font-bold rounded-md grid place-items-center text-sm">F</div>
+      <span class="font-semibold">FIRE Planner</span>
+    </a>
+    <a href="/" class="text-sm text-slate-600 hover:text-slate-900 transition">← 返回</a>
+  </nav>
+</header>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <h1 class="text-3xl font-bold tracking-tight mb-2">隐私政策</h1>
+  <p class="text-sm text-slate-500 font-medium mb-8">最后更新：2026-05-14</p>
+
+  <div class="hs-accordion-group divide-y divide-slate-200 border-y border-slate-200">
+
+    <div class="hs-accordion py-4 active" id="pv-1">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="true">
+        <span class="text-base font-semibold">1. 我们收集的信息</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <p>注册时：邮箱 + 密码（密码经 Supabase Auth 加盐哈希存储，我们不能看到原始密码）。</p>
+          <p>使用时：你在应用中输入的财务数据（资产、收入、支出、目标等）。这些数据存储在你浏览器的 localStorage 和你在 Supabase 项目下的 plans 表中。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-2">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">2. 我们如何使用这些信息</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <ul>
+            <li>邮箱：用于账户验证、登录、密码重置、关键服务通知</li>
+            <li>财务数据：仅用于在你自己的浏览器中渲染图表和模拟；不会被分析、不会被用于训练 AI、不会被聚合统计</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-3">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">3. 数据存储与多租户隔离</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <p>Postgres 行级安全（RLS）策略保证每个用户仅能访问 <code>user_id = auth.uid()</code> 的行。即使数据库被读取，单一用户的 access token 也只能拉到自己的方案。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-4">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">4. 我们不做的</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <ul>
+            <li>不出售用户数据给任何第三方</li>
+            <li>不向广告网络共享数据</li>
+            <li>不未经允许向第三方传输财务信息</li>
+            <li>不在产品内嵌入第三方追踪脚本（无 GA / 无 Meta Pixel）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-5">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">5. 用户权利</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <ul>
+            <li>在「账号设置」页面导出全部方案（JSON）</li>
+            <li>删除你的账号（云端方案随之 cascade delete）</li>
+            <li>通过 <a href="mailto:support@example.com">support@example.com</a> 申请其他数据请求</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-6">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">6. Cookies</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <p>本服务仅使用必要的功能性 storage（localStorage 存方案 + sessionStorage 存演示模式标记 + Supabase session cookie）。无分析 cookie、无广告 cookie。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-accordion py-4" id="pv-7">
+      <button type="button" class="hs-accordion-toggle group inline-flex items-center justify-between w-full text-left text-slate-900 hover:text-slate-700 transition" aria-expanded="false">
+        <span class="text-base font-semibold">7. 政策更新</span>
+        <svg class="hs-accordion-active:hidden block size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <svg class="hs-accordion-active:block hidden size-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+      </button>
+      <div class="hs-accordion-content hidden w-full overflow-hidden transition-[height] duration-300">
+        <div class="mt-3 prose prose-slate prose-sm max-w-none">
+          <p>实质性更新会通过登录后弹窗 + 邮件通知。继续使用服务即视为接受新政策。</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="max-w-3xl mx-auto px-4 sm:px-6 py-8 mt-12 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row justify-between gap-2">
+  <span>© 2026 FIRE Planner</span>
+  <span><a href="/terms" class="hover:text-slate-900">服务条款</a> · <a href="mailto:support@example.com" class="hover:text-slate-900">联系</a></span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script>
+<script>
+if (window.HSStaticMethods?.autoInit) window.HSStaticMethods.autoInit();
+</script>
+</body>
+</html>
