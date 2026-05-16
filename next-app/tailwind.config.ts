@@ -66,15 +66,15 @@ const config: Config = {
         mono: ['var(--font-mono)', 'JetBrains Mono', 'SF Mono', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        /* 密集型阶梯 (base 13px, Linear 级密度) */
-        xs: ['0.6875rem', { lineHeight: '1rem' }],       /* 11 */
-        sm: ['0.75rem', { lineHeight: '1.1rem' }],        /* 12 */
-        base: ['0.8125rem', { lineHeight: '1.25rem' }],   /* 13 */
-        md: ['0.875rem', { lineHeight: '1.35rem' }],      /* 14 */
-        lg: ['1rem', { lineHeight: '1.5rem' }],           /* 16 */
-        xl: ['1.25rem', { lineHeight: '1.4' }],           /* 20 */
-        '2xl': ['1.625rem', { lineHeight: '1.2' }],       /* 26 */
-        hero: ['2.125rem', { lineHeight: '1.15', letterSpacing: '-0.02em' }], /* 34 */
+        /* 小字不要太小: 最小 12, 正文 14 */
+        xs: ['0.75rem', { lineHeight: '1.1rem' }],          /* 12 (原11→12) */
+        sm: ['0.8125rem', { lineHeight: '1.2rem' }],        /* 13 (原12→13) */
+        base: ['0.875rem', { lineHeight: '1.4rem' }],       /* 14 (原13→14) */
+        md: ['0.9375rem', { lineHeight: '1.45rem' }],       /* 15 */
+        lg: ['1.0625rem', { lineHeight: '1.6rem' }],        /* 17 */
+        xl: ['1.25rem', { lineHeight: '1.45' }],            /* 20 */
+        '2xl': ['1.5rem', { lineHeight: '1.25' }],          /* 24 */
+        hero: ['2rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }], /* 32 */
       },
       borderRadius: {
         sm: '4px',
@@ -84,10 +84,11 @@ const config: Config = {
         '2xl': '14px',
       },
       boxShadow: {
-        /* Stripe 式极柔, 低扩散 — 仅 3 级 */
-        e1: '0 1px 2px hsl(var(--text-1) / 0.04), 0 0 0 1px hsl(var(--text-1) / 0.04)',
-        e2: '0 4px 12px hsl(var(--text-1) / 0.08), 0 0 0 1px hsl(var(--text-1) / 0.04)',
-        e3: '0 16px 48px hsl(var(--text-1) / 0.16), 0 0 0 1px hsl(var(--text-1) / 0.04)',
+        /* 尽量不用阴影: e1 完全去阴影(靠 hairline 边框分层),
+           e2/e3 仅浮层(下拉/弹窗)需要时给极淡分离 */
+        e1: 'none',
+        e2: '0 2px 8px hsl(var(--text-1) / 0.06)',
+        e3: '0 8px 28px hsl(var(--text-1) / 0.10)',
       },
       transitionTimingFunction: {
         standard: 'cubic-bezier(.2, 0, 0, 1)',

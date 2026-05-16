@@ -9,14 +9,14 @@ import { planNetWorth, currentMonthlyIncome, stageMonthlyExpense } from '@/lib/s
 /* 数字+单位同基线: 单位用 inline span, text-3, 不另起大字号 */
 function Stat({ value, unit, className }: { value: string; unit?: string; className?: string }) {
   return (
-    <div className={cn('mono text-2xl font-semibold text-text-1 mt-1.5 leading-none', className)}>
+    <div className={cn('mono text-2xl font-medium text-text-1 mt-1.5 leading-none', className)}>
       {value}
       {unit && <span className="text-md text-text-3 font-normal ml-0.5">{unit}</span>}
     </div>
   );
 }
 
-const cardBase = 'rounded-lg bg-surface shadow-e1 px-4 py-3.5 ring-1 ring-border/60';
+const cardBase = 'rounded-lg bg-surface px-4 py-3.5 border border-border';
 
 export function HeroMetrics() {
   const plan = usePlanStore(s => s.plans[s.activePlanId]);
@@ -44,14 +44,14 @@ export function HeroMetrics() {
   if (!metrics) return null;
 
   const label = (t: string, extra?: React.ReactNode) => (
-    <div className="text-xs text-text-3 uppercase tracking-wider font-medium flex items-center gap-1.5">{t}{extra}</div>
+    <div className="text-sm text-text-2 font-normal flex items-center gap-1.5">{t}{extra}</div>
   );
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-7">
       <div className={cardBase}>
         {label('净资产')}
-        <div className="mono text-2xl font-semibold text-text-1 mt-1.5 leading-none">
+        <div className="mono text-2xl font-medium text-text-1 mt-1.5 leading-none">
           {fmtCompact(metrics.initial)}
         </div>
         <div className="text-sm text-text-3 mt-1.5">目标 <span className="mono text-text-2">¥{fmtCompact(metrics.target)}</span></div>
@@ -66,10 +66,10 @@ export function HeroMetrics() {
       </div>
 
       {/* FIRE — 品牌红强调: 白底 + 品牌 ring + 品牌数字, 不实心填充 */}
-      <div className={cn(cardBase, 'ring-primary/30 bg-primary/[0.025]')}>
-        {label('FIRE 预计达成', <span className="w-1.5 h-1.5 rounded-full bg-primary" />)}
-        <div className="mono text-2xl font-bold text-primary mt-1.5 leading-none">
-          {metrics.fireDate ?? <span className="text-text-3 font-semibold">尚未达成</span>}
+      <div className={cn(cardBase, 'border-primary/35 bg-primary/[0.03]')}>
+        {label('FIRE 预计达成')}
+        <div className="mono text-2xl font-medium text-primary mt-1.5 leading-none">
+          {metrics.fireDate ?? <span className="text-text-3 font-medium">尚未达成</span>}
         </div>
         <div className="text-sm text-text-3 mt-1.5">
           {metrics.yearsToFire != null
@@ -79,10 +79,10 @@ export function HeroMetrics() {
       </div>
 
       {/* Coast — 次级强调: 中性深色 ring, 冷静 */}
-      <div className={cn(cardBase, 'ring-border-strong')}>
-        {label('可停投点', <span className="text-text-3 font-normal normal-case tracking-normal">Coast FIRE</span>)}
-        <div className="mono text-2xl font-bold text-text-1 mt-1.5 leading-none">
-          {metrics.coastDate ?? <span className="text-text-3 font-semibold">—</span>}
+      <div className={cn(cardBase, 'border-border-strong')}>
+        {label('可停投点', <span className="text-text-3 font-normal">Coast FIRE</span>)}
+        <div className="mono text-2xl font-medium text-text-1 mt-1.5 leading-none">
+          {metrics.coastDate ?? <span className="text-text-3 font-medium">—</span>}
         </div>
         <div className="text-sm text-text-3 mt-1.5">
           {metrics.coastYears != null

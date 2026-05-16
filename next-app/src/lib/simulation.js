@@ -279,7 +279,10 @@ function monthlyIncomeAt(plan, simStartYear, m) {
         const end   = s.endYear   != null ? s.endYear   : 9999;
         if (currentYear < start || currentYear >= end) continue;
         const yearsActive = currentYear - start;
-        const grown = (Number(s.monthlyAmount) || 0) * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
+        // freq='year': 输入的是年额(如年终奖10万),按月引擎用月均等价值,
+        // 与"每年一笔"在 30+ 年复利下差异可忽略;用户只需填年额、选「年」。
+        const baseAmt = (Number(s.monthlyAmount) || 0) / (s.freq === 'year' ? 12 : 1);
+        const grown = baseAmt * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
         if (s.type === 'gross' && taxConfig) {
           total += grossToNet(grown, taxConfig).net;
         } else {
@@ -301,7 +304,8 @@ function monthlyIncomeAt(plan, simStartYear, m) {
     const end   = s.endYear   != null ? s.endYear   : 9999;
     if (currentYear < start || currentYear >= end) return sum;
     const yearsActive = currentYear - start;
-    const grown = (Number(s.monthlyAmount) || 0) * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
+    const baseAmt = (Number(s.monthlyAmount) || 0) / (s.freq === 'year' ? 12 : 1);
+    const grown = baseAmt * Math.pow(1 + (s.annualGrowth || 0), yearsActive);
     if (s.type === 'gross' && taxConfig) {
       return sum + grossToNet(grown, taxConfig).net;
     }
@@ -885,12 +889,33 @@ function runSim(plan) {
       annualDebt += totalMonthlyDebtPayment(plan, simStartYear, (yr - 1) * 12 + k);
     }
     annualDebt = Math.round(annualDebt);
-    const netSavings = annualIncome - annualExpense - annualDebt;
+
+    // 与 Monte-Carlo 同口径：把 recurring 事件 / 养老金 / 房产 / 医疗缺口 计入，
+    // 否则"年支出/年净储蓄"会系统性遗漏养娃(-6000)、公积金转投(+6000)等持续事件。
+    let recur = 0;
+    for (const ev of (plan.events || [])) {
+      if (ev.monthly && ev.year <= (simStartYear + yr)) recur += (Number(ev.monthlyDelta) || 0);
+    }
+    const propFlowM    = totalPropertyCashFlow(plan);
+    const pensionFlowM  = pensionMonthlyBenefit(plan, simStartYear, midM);
+    const medGapM      = healthcareGapAtMonth(plan, simStartYear, midM);
+    const baseExpM     = stageMonthlyExpenseAt(plan, midStage, midM);
+    const debtM        = annualDebt / 12;
+
+    let monthlyNet;
+    if (midStage === 'retired') {
+      monthlyNet = recur - baseExpM - debtM + propFlowM + pensionFlowM - medGapM;
+    } else {
+      monthlyNet = (annualIncome / 12) - baseExpM + recur - debtM + propFlowM + pensionFlowM - medGapM;
+    }
+    const netSavings = Math.round(monthlyNet * 12);
+    // 展示口径：支出列吸收所有真实流出，保持 收入 − 支出 − 偿债 = 净储蓄 自洽
+    const effExpense = Math.round(annualIncome - netSavings - annualDebt);
 
     yearlyRows.push({
       year: simStartYear + yr,
       income: annualIncome,
-      expense: annualExpense,
+      expense: effExpense,
       debt: annualDebt,
       netSavings,
       portfolioP50,

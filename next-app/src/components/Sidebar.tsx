@@ -42,13 +42,13 @@ export function Sidebar({ active, onSelect }: { active: ViewKey; onSelect: (k: V
   return (
     <nav className="row-span-2 flex flex-col py-4 overflow-y-auto bg-[hsl(222_47%_9%)]">
       <Link href="/" className="flex items-center gap-2.5 px-5 mb-6 group">
-        <div className="w-8 h-8 bg-primary text-primary-foreground font-bold rounded-md grid place-items-center text-base shadow-e1 transition-transform duration-fast ease-standard group-hover:scale-[1.06]">F</div>
-        <span className="text-white font-semibold tracking-tight text-md">FIRE Planner</span>
+        <div className="w-8 h-8 bg-primary text-primary-foreground font-medium rounded-md grid place-items-center text-base transition-transform duration-fast ease-standard group-hover:scale-[1.04]">F</div>
+        <span className="text-white font-medium tracking-tight text-md">FIRE Planner</span>
       </Link>
 
       {NAV_GROUPS.map(group => (
         <div key={group.title} className="mb-1">
-          <div className="px-5 mb-1.5 mt-3 text-xs text-white/35 font-semibold uppercase tracking-wider">{group.title}</div>
+          <div className="px-5 mb-1.5 mt-3 text-sm text-white/45 font-medium">{group.title}</div>
           {group.items.map(item => {
             const Icon = item.Icon;
             const isActive = active === item.key;
@@ -73,9 +73,8 @@ export function Sidebar({ active, onSelect }: { active: ViewKey; onSelect: (k: V
       ))}
 
       <div className="flex-1" />
-      <div className="px-5 pt-4 mt-2 border-t border-white/[0.06] text-sm flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
-        <span className="text-white/45">本地模式</span>
+      <div className="px-5 pt-4 mt-2 border-t border-white/[0.08] text-sm">
+        <span className="text-white/50">本地模式</span>
       </div>
     </nav>
   );

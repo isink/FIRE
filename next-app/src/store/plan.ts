@@ -65,6 +65,7 @@ interface Store {
   duplicatePlan: () => void;
   renamePlan: (newName: string) => void;
   deleteActivePlan: () => void;
+  importState: (plans: Record<string, any>, activeId: string) => void;
 }
 
 function load(): Pick<Store, 'plans' | 'activePlanId' | 'compareMode' | 'chartStyle'> {
@@ -412,6 +413,16 @@ export const usePlanStore = create<Store>((set, get) => ({
     const { [state.activePlanId]: _, ...rest } = state.plans;
     const newActive = Object.keys(rest)[0];
     set({ plans: rest, activePlanId: newActive });
+    get().save();
+    get().rerun();
+  },
+
+  importState: (plans, activeId) => {
+    if (!plans || typeof plans !== 'object' || !plans[activeId]) {
+      alert('JSON 格式无效：缺少 plans 或 activePlanId');
+      return;
+    }
+    set({ plans, activePlanId: activeId });
     get().save();
     get().rerun();
   },
