@@ -83,6 +83,8 @@ export function defaultPlan(name = '平衡', colorIdx = 0): any {
       payoutMonths: 139,
     },
     healthcareGapMonthly: 500,
+    housingFund: { enabled: false, monthlyContribution: 0, balance: 0, creditRate: 0.015, offsetMortgage: true },
+    occupationalPension: { enabled: false, balance: 0, monthlyContribution: 0, creditRate: 0.04, payout: 'monthly' },
     liabilities: [],
     goals: [],
     expenseCategories: splitExpenseToCategories(12000, 0.025),

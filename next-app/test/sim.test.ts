@@ -134,3 +134,55 @@ describe('回归锁：收入「按年」≈ 月额/12（年终奖 freq 特性）
     expect(diff).toBeLessThan(0.08);
   });
 });
+
+describe('回归锁：公积金冲房贷 = 抵消月供、净值更高', () => {
+  it('同一带房贷方案,启用公积金(冲贷、缴存覆盖月供)后终值显著更高', () => {
+    const base: any = {
+      id: 'b', name: 'b', color: '#b91c1c',
+      assets: [{ id: 'a', type: 'fund', name: '组合', amountCny: 300000, expectedReturn: 0.06, volatility: 0.12, dcaAmount: 0, dcaFreq: 'month', status: 'ok' }],
+      people: [{ id: 'p1', name: '本人', birthYear: 1990, retireYear: 2055, incomeStreams: [
+        { id: 's1', name: '工资', type: 'net', monthlyAmount: 15000, annualGrowth: 0.02, startYear: _y, endYear: null, freq: 'month', ownerId: 'p1' },
+      ] }],
+      incomeStreams: [], taxConfig: { city: 'shanghai', customRates: null, specialDeductions: {} },
+      stages: { working: { monthlyExpense: null }, transition: { enabled: false }, retired: { startYear: 2055, monthlyExpense: 9000 } },
+      glidePath: { enabled: false, equityFloorPct: 30 },
+      pension: { enabled: false }, healthcareGapMonthly: 0,
+      liabilities: [{ id: 'L1', name: '房贷', principal: 1200000, rate: 0.035, years: 20, paymentType: 'equal', startYear: _y }],
+      goals: [], expenseCategories: [], events: [],
+      target: 10_000_000, expense: 9000, retirementExpense: null,
+      ret: 0.06, vol: 0.12, infl: 0.025, incomeGrowth: 0.02, taxDrag: 0.005, swr: 0.035,
+      withdrawalStrategy: 'fixed', years: 25, birthYear: 1990,
+    };
+    seedRandom(2024);
+    const noHF = runSim(base);
+    seedRandom(2024);
+    const withHF = runSim({ ...base, housingFund: { enabled: true, monthlyContribution: 8000, balance: 100000, creditRate: 0.015, offsetMortgage: true } });
+    // 公积金把月供抵掉 + 还清后释放余额/续投 → 终值必须明显更高
+    expect(withHF.finalP50).toBeGreaterThan(noHF.finalP50 * 1.15);
+  });
+});
+
+describe('回归锁：职业年金独立账户 = 退休后增益、终值更高', () => {
+  it('启用职业年金(余额+缴存,按月领)后终值显著高于不启用', () => {
+    const base: any = {
+      id: 'o', name: 'o', color: '#b91c1c',
+      assets: [{ id: 'a', type: 'fund', name: '组合', amountCny: 500000, expectedReturn: 0.06, volatility: 0.12, dcaAmount: 0, dcaFreq: 'month', status: 'ok' }],
+      people: [{ id: 'p1', name: '本人', birthYear: 1985, retireYear: 2045, incomeStreams: [
+        { id: 's1', name: '工资', type: 'net', monthlyAmount: 12000, annualGrowth: 0.02, startYear: _y, endYear: null, freq: 'month', ownerId: 'p1' },
+      ] }],
+      incomeStreams: [], taxConfig: { city: 'shanghai', customRates: null, specialDeductions: {} },
+      stages: { working: { monthlyExpense: null }, transition: { enabled: false }, retired: { startYear: 2045, monthlyExpense: 12000 } },
+      glidePath: { enabled: false, equityFloorPct: 30 },
+      pension: { enabled: false, payoutMonths: 139 }, healthcareGapMonthly: 0,
+      liabilities: [], goals: [], expenseCategories: [], events: [],
+      target: 10_000_000, expense: 9000, retirementExpense: null,
+      ret: 0.06, vol: 0.12, infl: 0.025, incomeGrowth: 0.02, taxDrag: 0.005, swr: 0.035,
+      withdrawalStrategy: 'fixed', years: 35, birthYear: 1985,
+    };
+    seedRandom(99);
+    const noOP = runSim(base);
+    seedRandom(99);
+    const withOP = runSim({ ...base, occupationalPension: { enabled: true, balance: 200000, monthlyContribution: 2500, creditRate: 0.04, payout: 'monthly' } });
+    expect(withOP.finalP50).toBeGreaterThan(noOP.finalP50 * 1.1);
+  });
+});

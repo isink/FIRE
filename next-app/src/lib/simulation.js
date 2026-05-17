@@ -237,6 +237,33 @@ function totalPropertyCashFlow(plan) {
   return flow;
 }
 
+// 公积金参数(读 plan.housingFund)。冲房贷时抵月供、超出部分按结息率累积、还清后释放;
+// 不冲贷时缴存直接计入净储蓄、初始余额退休时释放。
+function housingFundParams(plan) {
+  const hf = plan.housingFund || {};
+  return {
+    on: !!hf.enabled,
+    contrib: Number(hf.monthlyContribution) || 0,
+    balance0: Number(hf.balance) || 0,
+    creditRate: hf.creditRate != null ? Number(hf.creditRate) : 0.015,
+    offset: hf.offsetMortgage !== false, // 默认冲房贷(体制内典型)
+  };
+}
+
+// 职业年金参数(读 plan.occupationalPension)。退休前按记账利率累积+缴存,
+// 退休按计发月数发放(monthly)或一次性入桶(lump)。缴存属单位+个人专户,不计入在职现金流。
+function occupationalPensionParams(plan) {
+  const op = plan.occupationalPension || {};
+  return {
+    on: !!op.enabled,
+    balance0: Number(op.balance) || 0,
+    contrib: Number(op.monthlyContribution) || 0,
+    creditRate: op.creditRate != null ? Number(op.creditRate) : 0.04,
+    payout: op.payout === 'lump' ? 'lump' : 'monthly',
+    payMonths: Math.max(60, Number(plan.pension?.payoutMonths) || 139),
+  };
+}
+
 // ── DCA helpers (used for display, not primary simulation income) ──
 const CALENDAR_DAYS_PER_MONTH = 365 / 12;
 
@@ -629,6 +656,8 @@ function runSim(plan) {
   }
 
   const timeline = buildEventTimeline(plan, simStartYear);
+  const HF = housingFundParams(plan);
+  const OP = occupationalPensionParams(plan);
 
   const sampledMonths = [];
   for (let m = 0; m <= months; m += SAMPLE_EVERY) sampledMonths.push(m);
@@ -682,6 +711,11 @@ function runSim(plan) {
     let sampleIdx      = 0;
     let everReached    = false;
     let recurringDelta = 0;
+    let hfBal = HF.on ? HF.balance0 : 0;   // 公积金账户余额(本 run)
+    let hfReleased = false;
+    let opBal = OP.on ? OP.balance0 : 0;   // 职业年金账户余额(本 run)
+    let opStarted = false;                 // 退休时已结转
+    let opMonthlyBenefit = 0, opPayLeft = 0;
     // Guyton-Klinger state（仅在 retired 模式启用时使用）
     let gkAnnual    = null;
     let gkInitRate  = swr;
@@ -721,6 +755,41 @@ function runSim(plan) {
       const pensionFlow = pensionMonthlyBenefit(plan, simStartYear, m);  // 仅 60 岁后 > 0
       const medGap      = healthcareGapAtMonth(plan, simStartYear, m);   // 仅退休阶段 > 0
 
+      // —— 公积金月度净效应 ——
+      let hfNet = 0;
+      if (HF.on) {
+        if (HF.offset) {
+          if (debtPay > 0) {
+            const covered = Math.min(HF.contrib, debtPay);
+            hfNet += covered;                       // 公积金替还的月供(抵消下方 −debtPay)
+            const surplus = HF.contrib - covered;
+            if (surplus > 0) hfBal += surplus;
+            hfBal *= (1 + HF.creditRate / 12);
+          } else {
+            if (!hfReleased) { hfNet += hfBal; hfBal = 0; hfReleased = true; }  // 还清后账户一次性释放
+            hfNet += HF.contrib;                    // 此后缴存全额转可投资
+          }
+        } else {
+          hfNet += HF.contrib;                      // 不冲贷:缴存直接进净储蓄
+          if (!hfReleased && stage === 'retired') { hfNet += hfBal; hfBal = 0; hfReleased = true; }
+        }
+      }
+
+      // —— 职业年金月度净效应 ——
+      let opNet = 0;
+      if (OP.on) {
+        if (stage !== 'retired') {
+          opBal = opBal * (1 + OP.creditRate / 12) + OP.contrib;  // 专户累积,不动现金流
+        } else {
+          if (!opStarted) {
+            opStarted = true;
+            if (OP.payout === 'lump') { opNet += opBal; opBal = 0; }
+            else { opMonthlyBenefit = OP.payMonths > 0 ? opBal / OP.payMonths : 0; opPayLeft = OP.payMonths; opBal = 0; }
+          }
+          if (OP.payout === 'monthly' && opPayLeft > 0) { opNet += opMonthlyBenefit; opPayLeft--; }
+        }
+      }
+
       let net;
       if (stage === 'retired') {
         const totalNow = (() => { let s = 0; for (let i = 0; i < N; i++) s += perAsset[i]; return s; })();
@@ -754,10 +823,10 @@ function runSim(plan) {
         } else {
           withdrawal = expenseNow;
         }
-        net = recurringDelta - withdrawal - debtPay + propFlow + pensionFlow - medGap;
+        net = recurringDelta - withdrawal - debtPay + propFlow + pensionFlow - medGap + hfNet + opNet;
       } else {
         const income = monthlyIncomeAt(plan, simStartYear, m) * incomeMult;
-        net = income - expenseNow + recurringDelta - debtPay + propFlow + pensionFlow - medGap;
+        net = income - expenseNow + recurringDelta - debtPay + propFlow + pensionFlow - medGap + hfNet + opNet;
       }
       if (net > 0) depositCash(perAsset, plan, net);
       else if (net < 0) drainFromBuckets(perAsset, plan, -net, ageNow, yearRec);
@@ -901,12 +970,23 @@ function runSim(plan) {
     const medGapM      = healthcareGapAtMonth(plan, simStartYear, midM);
     const baseExpM     = stageMonthlyExpenseAt(plan, midStage, midM);
     const debtM        = annualDebt / 12;
+    // 公积金稳态月效应(展示口径,不含一次性释放——与蒙卡同向,略保守)
+    const _hf = housingFundParams(plan);
+    const hfM = _hf.on ? (debtM > 0 ? Math.min(_hf.contrib, debtM) : _hf.contrib) : 0;
+    // 职业年金:退休后稳态月发(展示近似;一次性领的不在逐年体现,与公积金一致略保守)
+    const _op = occupationalPensionParams(plan);
+    let opM = 0;
+    if (_op.on && midStage === 'retired' && _op.payout === 'monthly') {
+      const ytr = Math.max(0, householdRetireYear(plan) - simStartYear);
+      const occAtRetire = _op.balance0 * Math.pow(1 + _op.creditRate, ytr) + _op.contrib * 12 * ytr * Math.pow(1 + _op.creditRate, ytr / 2);
+      opM = occAtRetire / _op.payMonths;
+    }
 
     let monthlyNet;
     if (midStage === 'retired') {
-      monthlyNet = recur - baseExpM - debtM + propFlowM + pensionFlowM - medGapM;
+      monthlyNet = recur - baseExpM - debtM + propFlowM + pensionFlowM - medGapM + hfM + opM;
     } else {
-      monthlyNet = (annualIncome / 12) - baseExpM + recur - debtM + propFlowM + pensionFlowM - medGapM;
+      monthlyNet = (annualIncome / 12) - baseExpM + recur - debtM + propFlowM + pensionFlowM - medGapM + hfM + opM;
     }
     const netSavings = Math.round(monthlyNet * 12);
     // 展示口径：支出列吸收所有真实流出，保持 收入 − 支出 − 偿债 = 净储蓄 自洽

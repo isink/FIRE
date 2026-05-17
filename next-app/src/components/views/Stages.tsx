@@ -3,8 +3,10 @@ import { usePlanStore } from '@/store/plan';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input, Label } from '@/components/ui/input';
 import { NumberField } from '@/components/ui/number-field';
+import { NativeSelect } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { fmt, _thisYear } from '@/lib/utils';
+import { REGIME_PRESETS, regimeByKey, CHONGQING_SOCIAL_AVG } from '@/lib/civilService';
 
 export function Stages() {
  const plan = usePlanStore(s => s.plans[s.activePlanId]);
@@ -28,7 +30,7 @@ export function Stages() {
  const inflRate = plan.infl || 0.025;
  const age = _thisYear - (plan.birthYear || _thisYear - 30);
  const yearsToSS = Math.max(0, 60 - age);
- const saAtRetire = (Number(pension.currentSocialAverage) || 11000) * Math.pow(1 + inflRate, yearsToSS);
+ const saAtRetire = (Number(pension.currentSocialAverage) || CHONGQING_SOCIAL_AVG) * Math.pow(1 + inflRate, yearsToSS);
  const totalYears = (Number(pension.yearsContributed) || 0) + yearsToSS;
  const basic = saAtRetire * (1 + (Number(pension.contributionIndex) || 1)) / 2 * totalYears * 0.01;
  const personal = (Number(pension.personalAccountBalance) || 0) / Math.max(60, Number(pension.payoutMonths) || 139);
@@ -152,6 +154,24 @@ export function Stages() {
  </div>
  {pension.enabled && (
  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+ <div className="md:col-span-3">
+ <Label className="block mb-1">编制类型<span className="text-text-3">(重庆口径,选中即填缴费指数,可再手改)</span></Label>
+ <NativeSelect
+ value={pension.regimeType || ''}
+ onChange={e => updatePension(p => {
+ const r = regimeByKey(e.target.value);
+ p.regimeType = e.target.value;
+ if (r) p.contributionIndex = r.contributionIndex;
+ if (p.currentSocialAverage == null) p.currentSocialAverage = CHONGQING_SOCIAL_AVG;
+ })}
+ className="max-w-xs h-8"
+ >
+ <option value="">— 选择编制 —</option>
+ {REGIME_PRESETS.map(r => (
+ <option key={r.key} value={r.key}>{r.label} · 缴费指数≈{r.contributionIndex}（{r.hint}）</option>
+ ))}
+ </NativeSelect>
+ </div>
  <div>
  <Label className="block mb-1">已缴年限</Label>
  <NumberField value={pension.yearsContributed ?? 5}
@@ -165,8 +185,8 @@ export function Stages() {
  className="h-8 text-right" />
  </div>
  <div>
- <Label className="block mb-1">当前社平 ¥/月</Label>
- <NumberField value={pension.currentSocialAverage ?? 11000}
+ <Label className="block mb-1">社平/计发基数 ¥/月<span className="text-text-3">(重庆默认)</span></Label>
+ <NumberField value={pension.currentSocialAverage ?? CHONGQING_SOCIAL_AVG}
  onCommit={n => updatePension(p => { p.currentSocialAverage = n || 0; })}
  className="h-8 text-right" />
  </div>
@@ -186,6 +206,91 @@ export function Stages() {
  )}
  </CardContent>
  </Card>
+
+ {/* 公积金模块 */}
+ {(() => {
+ const hf = plan.housingFund || {};
+ return (
+ <Card className={'mt-3 ' + (hf.enabled ? '' : 'opacity-70')}>
+ <CardContent className="p-4">
+ <div className="flex justify-between items-center pb-3 mb-4 border-b border-border">
+ <label className="font-medium text-text-1">公积金<span className="text-text-3">(体制内典型:冲房贷,还清后转可投资)</span></label>
+ <Switch checked={!!hf.enabled} onCheckedChange={(c) => updateActive(p => { p.housingFund = { ...(p.housingFund || {}), enabled: c }; })} />
+ </div>
+ {hf.enabled && (
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+ <div>
+ <Label className="block mb-1">月缴存合计 ¥<span className="text-text-3">(单位+个人)</span></Label>
+ <NumberField value={hf.monthlyContribution ?? 0}
+ onCommit={n => updateActive(p => { p.housingFund = { ...(p.housingFund || {}), monthlyContribution: n || 0 }; })}
+ className="h-8 text-right" />
+ </div>
+ <div>
+ <Label className="block mb-1">当前账户余额 ¥</Label>
+ <NumberField value={hf.balance ?? 0}
+ onCommit={n => updateActive(p => { p.housingFund = { ...(p.housingFund || {}), balance: n || 0 }; })}
+ className="h-8 text-right" />
+ </div>
+ <div>
+ <Label className="block mb-1">用途</Label>
+ <label className="flex items-center gap-2 h-8 text-base text-text-2 cursor-pointer">
+ <Switch checked={hf.offsetMortgage !== false}
+ onCheckedChange={(c) => updateActive(p => { p.housingFund = { ...(p.housingFund || {}), offsetMortgage: c }; })} />
+ <span>{hf.offsetMortgage !== false ? '冲房贷' : '直接计入储蓄'}</span>
+ </label>
+ </div>
+ <div className="md:col-span-3 text-xs text-text-3 leading-relaxed">
+ 冲房贷:公积金优先抵月供(等额抵消、不重复计),超出部分按 1.5% 结息累积;房贷还清后账户余额一次性释放、之后缴存全额转可投资。
+ </div>
+ </div>
+ )}
+ </CardContent>
+ </Card>
+ );
+ })()}
+
+ {/* 职业年金独立账户 */}
+ {(() => {
+ const op = plan.occupationalPension || {};
+ const monthly = op.payout !== 'lump';
+ return (
+ <Card className={'mt-3 ' + (op.enabled ? '' : 'opacity-70')}>
+ <CardContent className="p-4">
+ <div className="flex justify-between items-center pb-3 mb-4 border-b border-border">
+ <label className="font-medium text-text-1">职业年金<span className="text-text-3">(机关事业单位 单位8%+个人4%,记账利率约4%)</span></label>
+ <Switch checked={!!op.enabled} onCheckedChange={(c) => updateActive(p => { p.occupationalPension = { ...(p.occupationalPension || {}), enabled: c }; })} />
+ </div>
+ {op.enabled && (
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+ <div>
+ <Label className="block mb-1">当前账户余额 ¥</Label>
+ <NumberField value={op.balance ?? 0}
+ onCommit={n => updateActive(p => { p.occupationalPension = { ...(p.occupationalPension || {}), balance: n || 0 }; })}
+ className="h-8 text-right" />
+ </div>
+ <div>
+ <Label className="block mb-1">月缴存合计 ¥<span className="text-text-3">(单位+个人)</span></Label>
+ <NumberField value={op.monthlyContribution ?? 0}
+ onCommit={n => updateActive(p => { p.occupationalPension = { ...(p.occupationalPension || {}), monthlyContribution: n || 0 }; })}
+ className="h-8 text-right" />
+ </div>
+ <div>
+ <Label className="block mb-1">退休领取方式</Label>
+ <label className="flex items-center gap-2 h-8 text-base text-text-2 cursor-pointer">
+ <Switch checked={monthly}
+ onCheckedChange={(c) => updateActive(p => { p.occupationalPension = { ...(p.occupationalPension || {}), payout: c ? 'monthly' : 'lump' }; })} />
+ <span>{monthly ? '按月发(计发月数)' : '一次性领取'}</span>
+ </label>
+ </div>
+ <div className="md:col-span-3 text-xs text-text-3 leading-relaxed">
+ 退休前按记账利率(默认4%)累积、缴存计入专户(不影响在职现金流);退休时:按月=账户÷计发月数(与基本养老金一致,默认139)逐月发完,一次性=整笔转入可投资。
+ </div>
+ </div>
+ )}
+ </CardContent>
+ </Card>
+ );
+ })()}
  </div>
  );
 }
