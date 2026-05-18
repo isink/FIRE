@@ -12,6 +12,8 @@ const RETIRE_EXPENSE_RATIO = 0.7;     // 退休月开支 ≈ 在职到手 70%
 const FUND_EXPECTED_RETURN = 0.06;    // 储蓄/投资组合年化(粗口径)
 const FUND_VOLATILITY = 0.12;         // 储蓄/投资组合年化波动(粗口径)
 const POST_RETIRE_HORIZON = 40;       // 退休后再模拟 40 年(约至 80+ 岁)
+const PERSONAL_PENSION_RATE = 0.08;   // 个人养老金账户缴费率
+const INCOME_GROWTH = 0.02;           // 收入年化增长率
 
 const TZ_SEED = 1234567;
 
@@ -50,12 +52,9 @@ export interface TzResult {
   hook: string;
 }
 
-function buildPlan(inp: TzInput, civilOn: boolean): any {
+function buildPlan(inp: TzInput, retireExpense: number, civilOn: boolean): any {
   const birthYear = _thisYear - inp.age;
   const retireYear = birthYear + inp.targetRetireAge;
-
-  // FIX I4: compute once, reuse everywhere
-  const retireExpense = Math.round(inp.monthlyNet * RETIRE_EXPENSE_RATIO);
 
   // FIX C1: yearsContributed = already-contributed years (engine adds remaining years to 60 itself)
   const yearsContributed = Math.max(5, inp.age - CAREER_START_AGE);
@@ -86,7 +85,7 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
         name: '工资',
         type: 'net',
         monthlyAmount: inp.monthlyNet,
-        annualGrowth: 0.02,
+        annualGrowth: INCOME_GROWTH,
         startYear: _thisYear,
         endYear: null,
         freq: 'month',
@@ -121,7 +120,7 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
       contributionIndex: civilOn ? (regimeByKey(inp.regimeKey)?.contributionIndex ?? 1.0) : 1.0,
       regimeType: inp.regimeKey,   // FIX C2: schema hygiene
       currentSocialAverage: CHONGQING_SOCIAL_AVG,
-      personalAccountBalance: Math.round(inp.monthlyNet * 0.08 * 12 * yearsContributed),
+      personalAccountBalance: Math.round(inp.monthlyNet * PERSONAL_PENSION_RATE * 12 * yearsContributed),
       payoutMonths: 139,
     },
 
@@ -157,7 +156,7 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
     ret: FUND_EXPECTED_RETURN,
     vol: FUND_VOLATILITY,
     infl: 0.025,
-    incomeGrowth: 0.02,
+    incomeGrowth: INCOME_GROWTH,
     taxDrag: 0.005,
     swr: 0.035,
     withdrawalStrategy: 'fixed',
@@ -168,11 +167,9 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
 
 export function runTizhinei(inp: TzInput): TzResult {
   // FIX I3: both runs seeded with the same fixed seed for path-fair ceteris-paribus attribution
-  const real = runSimSeeded(buildPlan(inp, true));
-  const naive = runSimSeeded(buildPlan(inp, false));
-
-  // FIX I4: compute once here too
   const retireExpense = Math.round(inp.monthlyNet * RETIRE_EXPENSE_RATIO);
+  const real = runSimSeeded(buildPlan(inp, retireExpense, true));
+  const naive = runSimSeeded(buildPlan(inp, retireExpense, false));
 
   const wan = (n: number) => Math.round(n / 10000);
   const delta = wan(real.finalP50 - naive.finalP50);
