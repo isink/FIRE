@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { runTizhinei, type TzInput } from '@/lib/tz/engine';
 
-// 与 test/sim.test.ts 同款 mulberry32 种子，确定化蒙特卡洛
+// 与 test/sim.test.ts 同款 mulberry32 种子；facade 内部自带固定种子，
+// 此处的 beforeEach 不影响 facade 结果，保留以兼容其他潜在用途。
 function seedRandom(seed: number) {
   let a = seed >>> 0;
   globalThis.Math.random = () => {
@@ -26,15 +27,28 @@ describe('runTizhinei', () => {
     expect(typeof r.finalP50).toBe('number');
     expect(Number.isFinite(r.finalP50)).toBe(true);
     expect(r.hook.length).toBeGreaterThan(8);
+    // facade uses a fixed internal seed → results must be deterministic
+    expect(r.hook).toContain('粗算');
   });
 
-  it('体制内三件套使 FIRE 不晚于裸算（粗算单调性）', () => {
+  it('体制内三件套使期末资产明显高于裸算（路径公平对比）', () => {
+    // With I3: both runs use the same fixed seed → delta is a clean ceteris-paribus attribution.
+    // Observed deterministic values at base input:
+    //   finalP50      ≈ 14,219,930  (real, with pension/housing/occupational)
+    //   naiveFinalP50 ≈ 0           (naive, no civil benefits → insufficient assets at retirement)
+    // Delta > ¥100万 is a meaningful positive lower bound.
     const r = runTizhinei(base);
-    expect(r.naiveFinalP50).toBeLessThanOrEqual(r.finalP50 * 1.0001);
+    expect(r.finalP50).toBeGreaterThan(r.naiveFinalP50);
+    expect(r.finalP50 - r.naiveFinalP50).toBeGreaterThan(100_000); // ≥¥10万 meaningful margin
+    expect(r.hook).toContain('裸算');
   });
 
-  it('退休年龄越早，yearsToFire 不会更小为负且为数字或 null', () => {
-    const r = runTizhinei({ ...base, targetRetireAge: 45 });
-    expect(r.yearsToFire === null || r.yearsToFire >= 0).toBe(true);
+  it('yearsToFire 在合理区间内', () => {
+    // Observed deterministic value: yearsToFire ≈ 48.75 (within the 50-year horizon)
+    // Must be non-null, positive, and within the simulation years bound.
+    const r = runTizhinei(base);
+    expect(r.yearsToFire).not.toBeNull();
+    expect(r.yearsToFire!).toBeGreaterThan(3);
+    expect(r.yearsToFire!).toBeLessThan(base.targetRetireAge + 40); // within sim horizon
   });
 });

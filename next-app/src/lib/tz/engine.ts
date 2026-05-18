@@ -1,9 +1,35 @@
 // 体制内 FIRE 测算门面 —— 纯函数，无 UI/store 依赖。
 // 复用现有引擎 runSim；本期不修引擎口径，结果按"粗算"对外。
+// 注意：pension.yearsContributed 为已缴年限粗估（当前年龄 - 参工年龄），
+// 引擎内部会再加剩余年限至 60 岁；养老金月领为粗口径，实际误差已知且有界。
 // @ts-ignore - js engine
 import { runSim } from '@/lib/simulation';
 import { regimeByKey, CHONGQING_SOCIAL_AVG } from '@/lib/civilService';
 import { _thisYear, newId } from '@/lib/utils';
+
+const CAREER_START_AGE = 22;          // 假设 22 岁参加工作开始缴费
+const RETIRE_EXPENSE_RATIO = 0.7;     // 退休月开支 ≈ 在职到手 70%
+const FUND_EXPECTED_RETURN = 0.06;    // 储蓄/投资组合年化(粗口径)
+const FUND_VOLATILITY = 0.12;         // 储蓄/投资组合年化波动(粗口径)
+const POST_RETIRE_HORIZON = 40;       // 退休后再模拟 40 年(约至 80+ 岁)
+
+const TZ_SEED = 1234567;
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function runSimSeeded(plan: any) {
+  const orig = Math.random;
+  Math.random = mulberry32(TZ_SEED);
+  try { return runSim(plan); } finally { Math.random = orig; }
+}
 
 export interface TzInput {
   age: number;
@@ -30,14 +56,14 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
 
   const birthYear = _thisYear - inp.age;
   const retireYear = birthYear + inp.targetRetireAge;
-  const retireExpense = Math.round(inp.monthlyNet * 0.7);
 
-  // 粗算养老金月领 = 按重庆社平 × 缴费指数 / 120 (简化个人账户)
-  // 养老金仅在 civilOn 时生效
-  const yearsContributed = Math.max(5, inp.targetRetireAge - 22);
+  // FIX I4: compute once, reuse everywhere
+  const retireExpense = Math.round(inp.monthlyNet * RETIRE_EXPENSE_RATIO);
+
+  // FIX C1: yearsContributed = already-contributed years (engine adds remaining years to 60 itself)
+  const yearsContributed = Math.max(5, inp.age - CAREER_START_AGE);
 
   return {
-    id: newId(),
     name: '体制内粗算',
     color: '#2563eb',
 
@@ -46,8 +72,8 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
       type: 'fund',
       name: '储蓄/投资',
       amountCny: inp.savings,
-      expectedReturn: 0.06,
-      volatility: 0.12,
+      expectedReturn: FUND_EXPECTED_RETURN,
+      volatility: FUND_VOLATILITY,
       dcaAmount: 0,
       dcaFreq: 'month',
       status: 'ok',
@@ -94,6 +120,7 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
       enabled: civilOn,
       yearsContributed,
       contributionIndex,
+      regimeType: inp.regimeKey,   // FIX C2: schema hygiene
       currentSocialAverage: CHONGQING_SOCIAL_AVG,
       personalAccountBalance: Math.round(inp.monthlyNet * 0.08 * 12 * yearsContributed),
       payoutMonths: 139,
@@ -126,22 +153,25 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
     expense: retireExpense,
     retirementExpense: retireExpense,
 
-    ret: 0.06,
-    vol: 0.12,
+    ret: FUND_EXPECTED_RETURN,
+    vol: FUND_VOLATILITY,
     infl: 0.025,
     incomeGrowth: 0.02,
     taxDrag: 0.005,
     swr: 0.035,
     withdrawalStrategy: 'fixed',
-    years: Math.max(50, (retireYear - _thisYear) + 40),
+    years: Math.max(50, (retireYear - _thisYear) + POST_RETIRE_HORIZON),
     birthYear,
   };
 }
 
 export function runTizhinei(inp: TzInput): TzResult {
-  const real = runSim(buildPlan(inp, true));
-  const naive = runSim(buildPlan(inp, false));
-  const retireExpenseAssumed = Math.round(inp.monthlyNet * 0.7);
+  // FIX I3: both runs seeded with the same fixed seed for path-fair ceteris-paribus attribution
+  const real = runSimSeeded(buildPlan(inp, true));
+  const naive = runSimSeeded(buildPlan(inp, false));
+
+  // FIX I4: compute once here too
+  const retireExpense = Math.round(inp.monthlyNet * RETIRE_EXPENSE_RATIO);
 
   const wan = (n: number) => Math.round(n / 10000);
   const delta = wan(real.finalP50 - naive.finalP50);
@@ -154,7 +184,7 @@ export function runTizhinei(inp: TzInput): TzResult {
     naiveYearsToFire: naive.yearsToFire ?? null,
     finalP50: real.finalP50,
     naiveFinalP50: naive.finalP50,
-    retireExpenseAssumed,
+    retireExpenseAssumed: retireExpense,
     hook,
   };
 }
