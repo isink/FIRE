@@ -51,9 +51,6 @@ export interface TzResult {
 }
 
 function buildPlan(inp: TzInput, civilOn: boolean): any {
-  const regime = regimeByKey(inp.regimeKey);
-  const contributionIndex = regime?.contributionIndex ?? 1.0;
-
   const birthYear = _thisYear - inp.age;
   const retireYear = birthYear + inp.targetRetireAge;
 
@@ -117,16 +114,20 @@ function buildPlan(inp: TzInput, civilOn: boolean): any {
     glidePath: { enabled: false, equityFloorPct: 30 },
 
     pension: {
-      enabled: civilOn,
+      // Basic 社保 pension is ALWAYS enabled — every formally employed worker has it.
+      // civilOn merely changes the contributionIndex (regime vs enterprise 口径 1.0).
+      enabled: true,
       yearsContributed,
-      contributionIndex,
+      contributionIndex: civilOn ? (regimeByKey(inp.regimeKey)?.contributionIndex ?? 1.0) : 1.0,
       regimeType: inp.regimeKey,   // FIX C2: schema hygiene
       currentSocialAverage: CHONGQING_SOCIAL_AVG,
       personalAccountBalance: Math.round(inp.monthlyNet * 0.08 * 12 * yearsContributed),
       payoutMonths: 139,
     },
 
-    healthcareGapMonthly: civilOn ? 300 : 500,
+    // Healthcare gap is the same in both runs so it doesn't contaminate the attribution;
+    // 体制内 advantage is measured purely via pension index / occupational pension / housing fund.
+    healthcareGapMonthly: 400,
 
     housingFund: {
       enabled: civilOn && inp.housingFundMonthly > 0,
@@ -176,8 +177,8 @@ export function runTizhinei(inp: TzInput): TzResult {
   const wan = (n: number) => Math.round(n / 10000);
   const delta = wan(real.finalP50 - naive.finalP50);
   const hook = delta > 0
-    ? `这是粗算。算上编制养老金/公积金/职业年金，你期末资产比裸算多约 ¥${delta} 万——这三块多数人自己算时漏了或算错。`
-    : `这是粗算。你的体制内三件套对结果影响有限，真正的变量在支出与退休年龄——精算版给你拆开。`;
+    ? `这是粗算。同样收入和存款下，体制内（编制养老金+职业年金+公积金）比普通企业多攒约 ¥${delta} 万——这三块多数人自己算时漏了或算错。`
+    : `这是粗算。按你填的，体制内三件套相对普通企业的增量有限，真正的变量在支出与退休年龄——精算版给你拆开。`;
 
   return {
     yearsToFire: real.yearsToFire ?? null,
