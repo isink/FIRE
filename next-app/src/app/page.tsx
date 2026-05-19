@@ -150,7 +150,7 @@ export default function LandingPage() {
  <div className="max-w-3xl mx-auto text-center mb-14">
  <h2 className="text-sm font-medium text-primary">能力</h2>
  <p className="mt-3 text-2xl font-medium tracking-tight text-text-1">这是规划器，不是计算器</p>
- <p className="mt-5 text-lg text-text-2 leading-relaxed">市面上的 FIRE 计算器只会算"按 7% 复利"。真实场景里你得算个税、五险一金、买房、生娃、配偶收入、医疗通胀、社保领取、IPA 60 岁解锁。</p>
+ <p className="mt-5 text-lg text-text-2 leading-relaxed">市面上的 FIRE 计算器只会算&ldquo;按 7% 复利&rdquo;。真实场景里你得算个税、五险一金、买房、生娃、配偶收入、医疗通胀、社保领取、IPA 60 岁解锁。</p>
  </div>
  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
  {FEATURES.map((f, i) => {
@@ -211,7 +211,7 @@ export default function LandingPage() {
  <div className="w-7 h-7 bg-primary text-primary-foreground font-medium rounded-md grid place-items-center text-sm">F</div>
  <span className="font-medium tracking-tight">FIRE Planner</span>
  </div>
- <p className="text-base text-text-3 max-w-sm leading-relaxed">中国版财富自由规划器。把"几岁能 FIRE"从估算变成数学。</p>
+ <p className="text-base text-text-3 max-w-sm leading-relaxed">中国版财富自由规划器。把&ldquo;几岁能 FIRE&rdquo;从估算变成数学。</p>
  </div>
  <div className="flex gap-12 text-base text-text-3">
  <div className="space-y-2">

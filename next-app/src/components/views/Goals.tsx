@@ -162,7 +162,7 @@ export function Goals() {
  <div className="flex justify-between items-start mb-6">
  <div>
  <h2 className="text-xl font-medium text-text-1 mb-1 tracking-tight">目标</h2>
- <p className="text-base text-text-3">目标 = 计划某年的大额支出。每张卡显示"届时是否能覆盖" +"该目标使 FIRE 推迟几年"。</p>
+ <p className="text-base text-text-3">目标 = 计划某年的大额支出。每张卡显示&ldquo;届时是否能覆盖&rdquo; +&ldquo;该目标使 FIRE 推迟几年&rdquo;。</p>
  </div>
  <div className="flex items-center gap-4 text-sm">
  <div className="text-text-3">规划数 <strong className="mono text-text-1">{activeGoals.length}</strong></div>
