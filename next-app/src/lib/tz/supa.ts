@@ -1,7 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// 公开匿名 client，仅用于 tz 落地页埋点/留资（只 insert）。
-export const tzSupa = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-);
+// 惰性构造：缺 env 时不在 import 阶段抛错（埋点绝不可阻断页面）。
+let _client: SupabaseClient | null = null;
+
+export function getTzSupa(): SupabaseClient {
+  if (!_client) {
+    _client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    );
+  }
+  return _client;
+}
