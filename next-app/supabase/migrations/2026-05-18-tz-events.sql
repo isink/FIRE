@@ -20,5 +20,8 @@ alter table tz_events enable row level security;
 alter table tz_leads  enable row level security;
 
 -- 仅允许匿名 INSERT，禁止匿名 SELECT（数据从 dashboard 看）
+-- drop-if-exists 让本迁移可重复执行（policy 无 IF NOT EXISTS）
+drop policy if exists tz_events_anon_insert on tz_events;
+drop policy if exists tz_leads_anon_insert  on tz_leads;
 create policy tz_events_anon_insert on tz_events for insert to anon with check (true);
 create policy tz_leads_anon_insert  on tz_leads  for insert to anon with check (true);
