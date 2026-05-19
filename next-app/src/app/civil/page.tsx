@@ -81,7 +81,7 @@ export default function CivilPage() {
         <div className="mb-2 text-sm text-primary font-medium">体制内 · 身份测算</div>
         <h1 className="text-2xl font-medium tracking-tight">你的体制内身份,到底值多少钱?</h1>
         <p className="mt-3 text-base text-text-2 leading-relaxed">
-          把养老金 + 职业年金 + 稳定性折成今天的钱,并算清"现在离职"放弃了多少。
+          把养老金 + 职业年金 + 稳定性折成今天的钱,并算清&ldquo;现在离职&rdquo;放弃了多少。
           通用 FIRE 工具答不了这个问题——这就是为你这类家庭做的。
         </p>
 

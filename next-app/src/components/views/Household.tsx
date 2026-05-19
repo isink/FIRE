@@ -22,7 +22,7 @@ export function Household() {
  <h2 className="text-xl font-medium text-text-1 tracking-tight">家庭成员</h2>
  <span className="text-sm text-text-3">人数 <strong className="mono text-text-2">{plan.people?.length || 1}</strong></span>
  </div>
- <p className="text-base text-text-3 leading-relaxed">每人独立设置出生年和计划退休年。家庭层"退休"以最后一个人退休为准；社保按每人 60 岁分别触发；收入流归属到具体的人，在其退休年自动停。</p>
+ <p className="text-base text-text-3 leading-relaxed">每人独立设置出生年和计划退休年。家庭层&ldquo;退休&rdquo;以最后一个人退休为准；社保按每人 60 岁分别触发；收入流归属到具体的人，在其退休年自动停。</p>
  </div>
 
  <div className="space-y-3">

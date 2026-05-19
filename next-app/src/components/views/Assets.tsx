@@ -162,7 +162,7 @@ export function Assets() {
  <div className="flex justify-between items-start mb-6">
  <div>
  <h2 className="text-xl font-medium text-text-1 mb-1 tracking-tight">资产</h2>
- <p className="text-base text-text-3">每个资产独立的预期收益率和波动率。退休按"现金 → 应税 → IPA → 房产"四桶顺序取款。</p>
+ <p className="text-base text-text-3">每个资产独立的预期收益率和波动率。退休按&ldquo;现金 → 应税 → IPA → 房产&rdquo;四桶顺序取款。</p>
  </div>
  <Button variant="primary" size="sm" onClick={addAsset}><Plus className="w-3.5 h-3.5" /> 添加资产</Button>
  </div>

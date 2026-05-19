@@ -1,7 +1,4 @@
 {
   "extends": "next/core-web-vitals",
-  "ignorePatterns": ["test/**", "vitest.config.ts"],
-  "rules": {
-    "react/no-unescaped-entities": "off"
-  }
+  "ignorePatterns": ["test/**", "vitest.config.ts"]
 }
